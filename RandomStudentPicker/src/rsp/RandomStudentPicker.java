@@ -45,7 +45,7 @@ public class RandomStudentPicker extends Application {
     Button prevButton = new Button("Previous");
     Button pickButton = new Button("Random");
     Button nextButton;
-    ArrayList<String> students = new ArrayList();
+    ArrayList<String> students = new ArrayList<>();
     final Label studentNameLabel = new Label();
     final ImageView studentImageView = new ImageView();
 
@@ -64,7 +64,7 @@ public class RandomStudentPicker extends Application {
 	// LOAD THE JSON FILE FULL OF NAMES
 	JsonObject json = loadJSONFile(STUDENT_NAMES_FILE);
 	JsonArray studentsArray = json.getJsonArray("names");
-	images = new HashMap();
+	images = new HashMap<>();
 	for (int i = 0; i < studentsArray.size(); i++) {
 	    String studentName = studentsArray.getString(i);
 	    try {
@@ -111,7 +111,7 @@ public class RandomStudentPicker extends Application {
 	primaryStage.setScene(scene);
 
 	// PROVIDE A RESPONSE TO BUTTON CLICKS
-	EventHandler buttonsHandler = new EventHandler<ActionEvent>() {
+	EventHandler<ActionEvent> buttonsHandler = new EventHandler<ActionEvent>() {
 	    @Override
 	    public void handle(ActionEvent event) {
 		Task<Void> task = new Task<Void>() {
