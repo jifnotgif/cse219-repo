@@ -68,7 +68,7 @@ public class RandomStudentPicker extends Application {
 	for (int i = 0; i < studentsArray.size(); i++) {
 	    String studentName = studentsArray.getString(i);
 	    try {
-		Image studentImage = loadImage("images/" + studentName + ".JPG");
+		Image studentImage = loadImage("images/" + studentName + ".jpg");
 		images.put(studentName, studentImage);
 		students.add(studentName);
 	    } catch (Exception e) {
