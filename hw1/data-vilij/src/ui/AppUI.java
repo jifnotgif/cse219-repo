@@ -1,11 +1,16 @@
 package ui;
 
 import actions.AppActions;
-import javafx.geometry.HPos;
+import java.util.ArrayList;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -71,6 +76,7 @@ public final class AppUI extends UITemplate {
     @Override
     public void clear() {
         // TODO for homework 1
+        /* clear previous data points */
     }
 
     private void layout() {
@@ -88,8 +94,9 @@ public final class AppUI extends UITemplate {
         
         
         displayButton = new Button("Display");
+        
         vPane.getChildren().add(displayButton);
-      
+        
         vPane.setSpacing(10);
         grid.add(vPane,0,0);
         
@@ -97,17 +104,67 @@ public final class AppUI extends UITemplate {
         NumberAxis xAxis = new NumberAxis(0, 110, 10);
         NumberAxis yAxis = new NumberAxis(0, 100, 10);
         chart = new ScatterChart<Number, Number>(xAxis, yAxis);
-        chart.setPrefSize(1000, 500);
         chart.setTitle("Data Visualization");
         grid.add(chart, 1, 0);
         
+        displayButton.setOnAction(e -> {
+            try{
+                ObservableList dataArray = textArea.getParagraphs();
+                ArrayList labels = new ArrayList();
+                ArrayList points = new ArrayList();
+                for(int i = 0; i < dataArray.size(); i++){
+                    String line = dataArray.get(i).toString();
+                    String id = line.substring(0, line.indexOf("\t"));
+                    String label = line.substring(line.indexOf("\t"), line.lastIndexOf("\t")).trim();
+                    String coords = line.substring(line.lastIndexOf("\t")).trim();
+                    Integer xPoint = Integer.parseInt(coords.substring(0,coords.indexOf(",")));
+                    Integer yPoint = Integer.parseInt(coords.substring(coords.indexOf(",")+1));
+                    labels.add(label);
+                    points.add(new ScatterChart.Data<Integer,Integer>(xPoint, yPoint));
+            
+                }
+                
+                System.out.println("ORIGINAL LISTS=========");
+                System.out.println(labels);
+                System.out.println(points);
+                System.out.println("==============");
+                while(!labels.isEmpty()){
+                    ScatterChart.Series<Number, Number> series = new ScatterChart.Series<Number, Number>();
+                    String initial = (String) labels.get(0);
+                    series.setName(initial);
+                    int i =0;
+                    while(i<labels.size()){
+                        if(initial.equals(labels.get(i))){
+                            series.getData().add((Data)points.get(i));
+                            points.remove(i);
+                            System.out.println(i + " is removed");
+                            labels.remove(i);
+                            i--;
+                        }
+                        i++;
+                    }
+                    System.out.println(labels);
+                    System.out.println(points);
+                    System.out.println();
+                    chart.getData().add(series);
+                    
+                }
+                
+            }
+            catch(Throwable t){
+                Alert error = new Alert(AlertType.ERROR);
+                error.setHeaderText("Invalid input");
+                error.setContentText("Inputs must be:\n\t be in the format '@(name) (label) (x,y)' \n\t each paramater separated by tabs\n\t each data entry separated by line ");
+                error.show();
+            }
+            
+        });
         
         appPane.getChildren().add(grid);
         
         
         
     }
-
     private void setWorkspaceActions() {
         // TODO for homework 1
     }
