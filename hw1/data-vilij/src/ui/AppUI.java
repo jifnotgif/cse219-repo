@@ -1,9 +1,18 @@
 package ui;
 
 import actions.AppActions;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import vilij.templates.ApplicationTemplate;
 import vilij.templates.UITemplate;
@@ -17,14 +26,15 @@ public final class AppUI extends UITemplate {
 
     /** The application to which this class of actions belongs. */
     ApplicationTemplate applicationTemplate;
-
+    
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
     private ScatterChart<Number, Number> chart;          // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
-
+    
+    
     public ScatterChart<Number, Number> getChart() { return chart; }
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
@@ -39,7 +49,7 @@ public final class AppUI extends UITemplate {
 
     @Override
     protected void setToolBar(ApplicationTemplate applicationTemplate) {
-        // TODO for homework 1
+        super.setToolBar(applicationTemplate);
     }
 
     @Override
@@ -64,7 +74,38 @@ public final class AppUI extends UITemplate {
     }
 
     private void layout() {
-        // TODO for homework 1
+        GridPane grid = new GridPane();
+        grid.setPadding(new Insets(10,10,10,10));
+        VBox vPane = new VBox(10);
+        
+        Label boxTitle = new Label("Data File");
+        boxTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        vPane.getChildren().add(boxTitle);
+        
+        
+        textArea = new TextArea();
+        vPane.getChildren().add(textArea);
+        
+        
+        displayButton = new Button("Display");
+        vPane.getChildren().add(displayButton);
+      
+        vPane.setSpacing(10);
+        grid.add(vPane,0,0);
+        
+        
+        NumberAxis xAxis = new NumberAxis(0, 110, 10);
+        NumberAxis yAxis = new NumberAxis(0, 100, 10);
+        chart = new ScatterChart<Number, Number>(xAxis, yAxis);
+        chart.setPrefSize(1000, 500);
+        chart.setTitle("Data Visualization");
+        grid.add(chart, 1, 0);
+        
+        
+        appPane.getChildren().add(grid);
+        
+        
+        
     }
 
     private void setWorkspaceActions() {
