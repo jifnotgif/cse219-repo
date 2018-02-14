@@ -41,6 +41,7 @@ public class AppData implements DataComponent {
         processor.clear();
     }
 
+    
     public void displayData() {
         processor.toChartData(((AppUI) applicationTemplate.getUIComponent()).getChart());
     }

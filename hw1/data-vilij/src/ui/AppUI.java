@@ -8,19 +8,22 @@ import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.event.ActionEvent;
+
 import vilij.templates.ApplicationTemplate;
 import vilij.templates.UITemplate;
-import static java.io.File.separator;
-import javafx.event.ActionEvent;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
 import vilij.propertymanager.PropertyManager;
 
+import static java.io.File.separator;
 import static settings.AppPropertyTypes.SCREENSHOT_ICON;
 import static settings.AppPropertyTypes.SCREENSHOT_TOOLTIP;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
@@ -34,7 +37,7 @@ public final class AppUI extends UITemplate {
 
     /** The application to which this class of actions belongs. */
     ApplicationTemplate applicationTemplate;
-    AppData test;
+    AppData dataHandler;
     
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
@@ -43,15 +46,15 @@ public final class AppUI extends UITemplate {
     private Button                       displayButton;  // workspace button to display data on the chart
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
-    
+    private String                       storedData;
     
     public ScatterChart<Number, Number> getChart() { return chart; }
-
+    
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
         this.applicationTemplate = applicationTemplate;
     }
-
+    
     @Override
     protected void setResourcePaths(ApplicationTemplate applicationTemplate) {
         super.setResourcePaths(applicationTemplate);
@@ -89,60 +92,98 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        test.clear();
+        dataHandler.clear();
         textArea.clear();
-        newButton.setDisable(true);
-        saveButton.setDisable(true);
+        chart.getData().clear();
+        hasNewText = false;
     }
 
     private void layout() {
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(10,10,10,10));
+        GridPane pane = new GridPane();
+        pane.prefWidthProperty().bind(appPane.widthProperty());
+        pane.setPadding(new Insets(10,10,10,10));
+        
+        
         VBox vPane = new VBox(10);
-        
+        vPane.setSpacing(10);
+ 
         Label boxTitle = new Label("Data File");
-        boxTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        vPane.getChildren().add(boxTitle);
-        
+        boxTitle.setFont(Font.font("Arial", 18));
         
         textArea = new TextArea();
-        vPane.getChildren().add(textArea);
-        
+        textArea.setPrefWidth(300);
+        textArea.setPrefHeight(150);
+        textArea.textProperty().addListener(e -> {
+            if(getUserText().equals(storedData)) hasNewText = false;
+            else    hasNewText = true;
+            
+            if(!getUserText().equals("")){
+                newButton.setDisable(false);
+                saveButton.setDisable(false);
+            }
+            else{
+                newButton.setDisable(true);
+                saveButton.setDisable(true);
+            }
+
+        });
         
         displayButton = new Button("Display");
         
+        vPane.getChildren().add(boxTitle);
+        vPane.getChildren().add(textArea);
         vPane.getChildren().add(displayButton);
-        
-        vPane.setSpacing(10);
-        grid.add(vPane,0,0);
         
         
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
         chart = new ScatterChart<Number, Number>(xAxis, yAxis);
         chart.setTitle("Data Visualization");
-        grid.add(chart, 1, 0);
+        chart.setMaxHeight((2*appPane.getHeight())/3);
+        
+        final RowConstraints row = new RowConstraints();
+        row.setPrefHeight(chart.getMaxHeight());
+        final ColumnConstraints textColumn = new ColumnConstraints();
+        final ColumnConstraints chartColumn = new ColumnConstraints();
+        chartColumn.setHgrow(Priority.ALWAYS);
+        pane.getRowConstraints().add(row);
+        pane.getColumnConstraints().addAll(textColumn, chartColumn);
+        
+        dataHandler = new AppData(applicationTemplate);
         
         displayButton.setOnAction((ActionEvent e) -> {
-            test = new AppData(applicationTemplate);
-            try {
-                test.loadData(textArea.getText());
-                test.displayData();
-
-            }
-            catch(Exception ex) {
+           storedData = getUserText();
+           try {
+                    dataHandler.clear();
+                    chart.getData().clear();
+                    dataHandler.loadData(storedData);
+                    if(hasNewText){
+                        dataHandler.displayData();
+                    }
+               }
+            
+           catch(Exception ex) {
                 ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
                 err.show("Invalid input", "Data points are in the following format:\n"
                         + "@name label x,y\n\n"+
-                        "•Make sure section is separated by a tab" );
-            }         
+                        "• Make sure each section is separated by a tab" );
+            }   
+            
+            
         });
         
-        appPane.getChildren().add(grid);
+        pane.add(vPane, 0, 0);
+        pane.add(chart, 1, 0);
+        appPane.getChildren().add(pane);
         
         
         
     }
+    
+    public String getUserText(){
+        return textArea.getText();
+    }
+    
     private void setWorkspaceActions() {
        //TODO hw 1
     }
