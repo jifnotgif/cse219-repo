@@ -1,16 +1,10 @@
 package ui;
 
 import actions.AppActions;
-import java.util.ArrayList;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import dataprocessors.AppData;
 import javafx.geometry.Insets;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
-import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -21,7 +15,16 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import vilij.templates.ApplicationTemplate;
 import vilij.templates.UITemplate;
+import static java.io.File.separator;
+import javafx.event.ActionEvent;
+import vilij.components.Dialog;
+import vilij.components.ErrorDialog;
+import vilij.propertymanager.PropertyManager;
 
+import static settings.AppPropertyTypes.SCREENSHOT_ICON;
+import static settings.AppPropertyTypes.SCREENSHOT_TOOLTIP;
+import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
+import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
 /**
  * This is the application's user interface implementation.
  *
@@ -31,9 +34,11 @@ public final class AppUI extends UITemplate {
 
     /** The application to which this class of actions belongs. */
     ApplicationTemplate applicationTemplate;
+    AppData test;
     
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
+    private String                       scrnshoticonPath;
     private ScatterChart<Number, Number> chart;          // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
     private TextArea                     textArea;       // text area for new data input
@@ -50,11 +55,20 @@ public final class AppUI extends UITemplate {
     @Override
     protected void setResourcePaths(ApplicationTemplate applicationTemplate) {
         super.setResourcePaths(applicationTemplate);
+        PropertyManager manager = applicationTemplate.manager;
+        String iconsPath = "/" + String.join(separator,
+                            manager.getPropertyValue(GUI_RESOURCE_PATH.name()),
+                            manager.getPropertyValue(ICONS_RESOURCE_PATH.name()));
+        scrnshoticonPath = String.join(separator, iconsPath, manager.getPropertyValue(SCREENSHOT_ICON.name()));
+        
     }
 
     @Override
     protected void setToolBar(ApplicationTemplate applicationTemplate) {
+        PropertyManager manager = applicationTemplate.manager;
         super.setToolBar(applicationTemplate);
+        scrnshotButton = setToolbarButton(scrnshoticonPath, manager.getPropertyValue(SCREENSHOT_TOOLTIP.name()), true);
+        super.toolBar.getItems().add(scrnshotButton);
     }
 
     @Override
@@ -75,8 +89,10 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        // TODO for homework 1
-        /* clear previous data points */
+        test.clear();
+        textArea.clear();
+        newButton.setDisable(true);
+        saveButton.setDisable(true);
     }
 
     private void layout() {
@@ -101,63 +117,25 @@ public final class AppUI extends UITemplate {
         grid.add(vPane,0,0);
         
         
-        NumberAxis xAxis = new NumberAxis(0, 110, 10);
-        NumberAxis yAxis = new NumberAxis(0, 100, 10);
+        NumberAxis xAxis = new NumberAxis();
+        NumberAxis yAxis = new NumberAxis();
         chart = new ScatterChart<Number, Number>(xAxis, yAxis);
         chart.setTitle("Data Visualization");
         grid.add(chart, 1, 0);
         
-        displayButton.setOnAction(e -> {
-            try{
-                ObservableList dataArray = textArea.getParagraphs();
-                ArrayList labels = new ArrayList();
-                ArrayList points = new ArrayList();
-                for(int i = 0; i < dataArray.size(); i++){
-                    String line = dataArray.get(i).toString();
-                    String id = line.substring(0, line.indexOf("\t"));
-                    String label = line.substring(line.indexOf("\t"), line.lastIndexOf("\t")).trim();
-                    String coords = line.substring(line.lastIndexOf("\t")).trim();
-                    Integer xPoint = Integer.parseInt(coords.substring(0,coords.indexOf(",")));
-                    Integer yPoint = Integer.parseInt(coords.substring(coords.indexOf(",")+1));
-                    labels.add(label);
-                    points.add(new ScatterChart.Data<Integer,Integer>(xPoint, yPoint));
-            
-                }
-                
-                System.out.println("ORIGINAL LISTS=========");
-                System.out.println(labels);
-                System.out.println(points);
-                System.out.println("==============");
-                while(!labels.isEmpty()){
-                    ScatterChart.Series<Number, Number> series = new ScatterChart.Series<Number, Number>();
-                    String initial = (String) labels.get(0);
-                    series.setName(initial);
-                    int i =0;
-                    while(i<labels.size()){
-                        if(initial.equals(labels.get(i))){
-                            series.getData().add((Data)points.get(i));
-                            points.remove(i);
-                            System.out.println(i + " is removed");
-                            labels.remove(i);
-                            i--;
-                        }
-                        i++;
-                    }
-                    System.out.println(labels);
-                    System.out.println(points);
-                    System.out.println();
-                    chart.getData().add(series);
-                    
-                }
-                
+        displayButton.setOnAction((ActionEvent e) -> {
+            test = new AppData(applicationTemplate);
+            try {
+                test.loadData(textArea.getText());
+                test.displayData();
+
             }
-            catch(Throwable t){
-                Alert error = new Alert(AlertType.ERROR);
-                error.setHeaderText("Invalid input");
-                error.setContentText("Inputs must be:\n\t be in the format '@(name) (label) (x,y)' \n\t each paramater separated by tabs\n\t each data entry separated by line ");
-                error.show();
-            }
-            
+            catch(Exception ex) {
+                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                err.show("Invalid input", "Data points are in the following format:\n"
+                        + "@name label x,y\n\n"+
+                        "•Make sure section is separated by a tab" );
+            }         
         });
         
         appPane.getChildren().add(grid);
@@ -166,6 +144,6 @@ public final class AppUI extends UITemplate {
         
     }
     private void setWorkspaceActions() {
-        // TODO for homework 1
+       //TODO hw 1
     }
 }
