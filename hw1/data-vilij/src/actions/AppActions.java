@@ -2,9 +2,15 @@ package actions;
 
 import vilij.components.ActionComponent;
 import vilij.templates.ApplicationTemplate;
+import vilij.components.ConfirmationDialog;
+import vilij.components.ConfirmationDialog.Option;
+import vilij.components.Dialog;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+
 
 /**
  * This is the concrete implementation of the action handlers required by the application.
@@ -25,7 +31,10 @@ public final class AppActions implements ActionComponent {
 
     @Override
     public void handleNewRequest() {
-        // TODO for homework 1
+        try {
+            promptToSave();
+        } catch (IOException ex) {
+        }
     }
 
     @Override
@@ -40,7 +49,13 @@ public final class AppActions implements ActionComponent {
 
     @Override
     public void handleExitRequest() {
-        // TODO for homework 1
+        try {
+            applicationTemplate.stop();
+            System.exit(0);
+        } catch (Exception ex) {
+        }
+        
+        
     }
 
     @Override
@@ -65,8 +80,21 @@ public final class AppActions implements ActionComponent {
      * @return <code>false</code> if the user presses the <i>cancel</i>, and <code>true</code> otherwise.
      */
     private boolean promptToSave() throws IOException {
-        // TODO for homework 1
-        // TODO remove the placeholder line below after you have implemented this method
+        ConfirmationDialog s = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
+        s.show("Save File", "Are you sure you want to start a new file? You will lose any unsaved progress!");
+        Option userSelection = s.getSelectedOption();
+        if(userSelection == Option.YES){
+            FileChooser t = new FileChooser();
+            t.setTitle("Save file");
+            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File (.tsd)","*.tsd"));
+            t.setInitialFileName("Untitled.tsd");
+            t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            return true;
+        }
+        else if(userSelection == Option.NO){
+            return true;
+        }
+        
         return false;
     }
 }
