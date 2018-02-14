@@ -1,5 +1,6 @@
 package actions;
 
+import java.io.File;
 import vilij.components.ActionComponent;
 import vilij.templates.ApplicationTemplate;
 import vilij.components.ConfirmationDialog;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
+import ui.AppUI;
 
 /**
  * This is the concrete implementation of the action handlers required by the application.
@@ -21,6 +23,7 @@ public final class AppActions implements ActionComponent {
 
     /** The application to which this class of actions belongs. */
     private ApplicationTemplate applicationTemplate;
+    private AppUI userInterface;
 
     /** Path to the data file currently active. */
     Path dataFilePath;
@@ -80,18 +83,24 @@ public final class AppActions implements ActionComponent {
      * @return <code>false</code> if the user presses the <i>cancel</i>, and <code>true</code> otherwise.
      */
     private boolean promptToSave() throws IOException {
+        
         ConfirmationDialog s = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
-        s.show("Save File", "Are you sure you want to start a new file? You will lose any unsaved progress!");
+        s.show("Save Current Work", "Would you like to save your current work?");
         Option userSelection = s.getSelectedOption();
         if(userSelection == Option.YES){
+            File workingDirectory = new File(System.getProperty("user.dir"));
             FileChooser t = new FileChooser();
-            t.setTitle("Save file");
-            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File (.tsd)","*.tsd"));
+            t.setInitialDirectory(workingDirectory);
+            t.setTitle("Save file to");
+            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
             t.setInitialFileName("Untitled.tsd");
-            t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            File save = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            
+            // ACTUALLY SAVE THE FILE
             return true;
         }
         else if(userSelection == Option.NO){
+            userInterface.clear();
             return true;
         }
         
