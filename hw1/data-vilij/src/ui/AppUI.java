@@ -26,6 +26,7 @@ import vilij.propertymanager.PropertyManager;
 import static java.io.File.separator;
 import static settings.AppPropertyTypes.SCREENSHOT_ICON;
 import static settings.AppPropertyTypes.SCREENSHOT_TOOLTIP;
+import vilij.components.DataComponent;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
 import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
 /**
@@ -37,7 +38,7 @@ public final class AppUI extends UITemplate {
 
     /** The application to which this class of actions belongs. */
     ApplicationTemplate applicationTemplate;
-    AppData dataHandler;
+    DataComponent dataHandler;
     
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
@@ -92,14 +93,16 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        dataHandler.clear();
         textArea.clear();
+        ((AppData)dataHandler).clear();
         chart.getData().clear();
         hasNewText = false;
     }
 
     private void layout() {
         GridPane pane = new GridPane();
+        
+
         pane.prefWidthProperty().bind(appPane.widthProperty());
         pane.setPadding(new Insets(10,10,10,10));
         
@@ -110,24 +113,12 @@ public final class AppUI extends UITemplate {
         Label boxTitle = new Label("Data File");
         boxTitle.setFont(Font.font("Arial", 18));
         
+        
         textArea = new TextArea();
         textArea.setPrefWidth(300);
         textArea.setPrefHeight(150);
-        textArea.textProperty().addListener(e -> {
-            if(getUserText().equals(storedData)) hasNewText = false;
-            else    hasNewText = true;
-            
-            if(!getUserText().equals("")){
-                newButton.setDisable(false);
-                saveButton.setDisable(false);
-            }
-            else{
-                newButton.setDisable(true);
-                saveButton.setDisable(true);
-            }
 
-        });
-        
+
         displayButton = new Button("Display");
         
         vPane.getChildren().add(boxTitle);
@@ -149,35 +140,9 @@ public final class AppUI extends UITemplate {
         pane.getRowConstraints().add(row);
         pane.getColumnConstraints().addAll(textColumn, chartColumn);
         
-        dataHandler = new AppData(applicationTemplate);
-        
-        displayButton.setOnAction((ActionEvent e) -> {
-           storedData = getUserText();
-           try {
-                    dataHandler.clear();
-                    chart.getData().clear();
-                    dataHandler.loadData(storedData);
-                    if(hasNewText){
-                        dataHandler.displayData();
-                    }
-               }
-            
-           catch(Exception ex) {
-                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                err.show("Invalid input", "Data points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab" );
-            }   
-            
-            
-        });
-        
         pane.add(vPane, 0, 0);
         pane.add(chart, 1, 0);
         appPane.getChildren().add(pane);
-        
-        
-        
     }
     
     public String getUserText(){
@@ -185,6 +150,42 @@ public final class AppUI extends UITemplate {
     }
     
     private void setWorkspaceActions() {
-       //TODO hw 1
+        textArea.textProperty().addListener(e -> {
+            if(getUserText().equals(storedData)) hasNewText = false;
+            else hasNewText = true;
+            
+            if(!getUserText().equals("")){
+                newButton.setDisable(false);
+                saveButton.setDisable(false);
+            }
+            else{
+                newButton.setDisable(true);
+                saveButton.setDisable(true);
+            }
+
+        });
+        
+        dataHandler = new AppData(applicationTemplate);
+        
+        displayButton.setOnAction((ActionEvent e) -> {
+           storedData = getUserText();
+           try {
+                    ((AppData)dataHandler).clear();
+                    chart.getData().clear();
+                    ((AppData)dataHandler).loadData(storedData);
+                    if(hasNewText){
+                        ((AppData)dataHandler).displayData();
+                    }
+               }
+            
+           catch(Exception ex) {
+                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                err.show("Invalid input", "Data points are in the following format:\n"
+                        + "@name label x,y\n\n"+
+                        "• Make sure each section is separated by a tab\n"
+                        + "• Each data value is stored in a single line\n"
+                        + "• Make sure there are no empty or incomplete data values" );
+            }      
+        });
     }
 }
