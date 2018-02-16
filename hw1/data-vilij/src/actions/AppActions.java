@@ -12,7 +12,10 @@ import java.nio.file.Path;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
+import dataprocessors.AppData;
+import java.io.FileWriter;
 import ui.AppUI;
+import vilij.components.ErrorDialog;
 
 /**
  * This is the concrete implementation of the action handlers required by the application.
@@ -23,7 +26,6 @@ public final class AppActions implements ActionComponent {
 
     /** The application to which this class of actions belongs. */
     private ApplicationTemplate applicationTemplate;
-    private AppUI userInterface;
 
     /** Path to the data file currently active. */
     Path dataFilePath;
@@ -37,6 +39,8 @@ public final class AppActions implements ActionComponent {
         try {
             promptToSave();
         } catch (IOException ex) {
+            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show("Error", "Error while attempting to create new file.");
         }
     }
 
@@ -56,9 +60,8 @@ public final class AppActions implements ActionComponent {
             applicationTemplate.stop();
             System.exit(0);
         } catch (Exception ex) {
-        }
-        
-        
+            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show("Error", "Error while attempting to close the application.");}
     }
 
     @Override
@@ -83,7 +86,6 @@ public final class AppActions implements ActionComponent {
      * @return <code>false</code> if the user presses the <i>cancel</i>, and <code>true</code> otherwise.
      */
     private boolean promptToSave() throws IOException {
-        
         ConfirmationDialog s = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
         s.show("Save Current Work", "Would you like to save your current work?");
         Option userSelection = s.getSelectedOption();
@@ -91,16 +93,24 @@ public final class AppActions implements ActionComponent {
             File workingDirectory = new File(System.getProperty("user.dir"));
             FileChooser t = new FileChooser();
             t.setInitialDirectory(workingDirectory);
-            t.setTitle("Save file to");
+            t.setTitle("Save file");
             t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
-            t.setInitialFileName("Untitled.tsd");
-            File save = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
-            
-            // ACTUALLY SAVE THE FILE
+            t.setInitialFileName("Untitled");
+            File saveFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            if(saveFile != null){
+                try{
+                    FileWriter writer = new FileWriter(saveFile);
+                    writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
+                    writer.close();
+                }catch (IOException ex) {
+                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                    err.show("Error", "Error while attempting to save file.");
+                }
+            }
             return true;
         }
         else if(userSelection == Option.NO){
-            userInterface.clear();
+            ((AppUI)applicationTemplate.getUIComponent()).clear();
             return true;
         }
         
