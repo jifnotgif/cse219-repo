@@ -38,7 +38,6 @@ public final class AppUI extends UITemplate {
 
     /** The application to which this class of actions belongs. */
     ApplicationTemplate applicationTemplate;
-    DataComponent dataHandler;
     
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
@@ -94,7 +93,7 @@ public final class AppUI extends UITemplate {
     @Override
     public void clear() {
         textArea.clear();
-        ((AppData)dataHandler).clear();
+        ((AppData)applicationTemplate.getDataComponent()).clear();
         chart.getData().clear();
         hasNewText = false;
     }
@@ -131,6 +130,7 @@ public final class AppUI extends UITemplate {
         chart = new ScatterChart<Number, Number>(xAxis, yAxis);
         chart.setTitle("Data Visualization");
         chart.setMaxHeight((2*appPane.getHeight())/3);
+        this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource("css/chart.css").toExternalForm());
         
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(chart.getMaxHeight());
@@ -149,6 +149,10 @@ public final class AppUI extends UITemplate {
         return textArea.getText();
     }
     
+    public Button getSaveButton(){
+        return saveButton;
+    }
+    
     private void setWorkspaceActions() {
         textArea.textProperty().addListener(e -> {
             if(getUserText().equals(storedData)) hasNewText = false;
@@ -165,27 +169,26 @@ public final class AppUI extends UITemplate {
 
         });
         
-        dataHandler = new AppData(applicationTemplate);
-        
         displayButton.setOnAction((ActionEvent e) -> {
            storedData = getUserText();
            try {
-                    ((AppData)dataHandler).clear();
+                    ((AppData)applicationTemplate.getDataComponent()).clear();
                     chart.getData().clear();
-                    ((AppData)dataHandler).loadData(storedData);
+                    ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
                     if(hasNewText){
-                        ((AppData)dataHandler).displayData();
+                        ((AppData)applicationTemplate.getDataComponent()).displayData();
                     }
                }
             
            catch(Exception ex) {
-                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                err.show("Invalid input", "Data points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab\n"
-                        + "• Each data value is stored in a single line\n"
-                        + "• Make sure there are no empty or incomplete data values" );
-            }      
+               System.out.println(ex+""); // Error should show up in GUI, not console
+           }
         });
+        
+        /*
+        add a tick box for read-only data
+        event: grey out text area and make it uneditable
+        */
+        
     }
 }
