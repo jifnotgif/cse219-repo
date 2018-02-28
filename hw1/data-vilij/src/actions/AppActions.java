@@ -29,6 +29,7 @@ public final class AppActions implements ActionComponent {
 
     /** Path to the data file currently active. */
     Path dataFilePath;
+    File currentFile;
 
     public AppActions(ApplicationTemplate applicationTemplate) {
         this.applicationTemplate = applicationTemplate;
@@ -37,7 +38,11 @@ public final class AppActions implements ActionComponent {
     @Override
     public void handleNewRequest() {
         try {
-            promptToSave();
+            if(dataFilePath == null){
+                promptToSave();
+            }else{
+                applicationTemplate.getUIComponent().clear();
+            }
         } catch (IOException ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show("Error", "Error while attempting to create new file.");
@@ -45,13 +50,61 @@ public final class AppActions implements ActionComponent {
     }
 
     @Override
-    public void handleSaveRequest() {
-        // TODO: NOT A PART OF HW 1
+    public void handleSaveRequest() { 
+        if(dataFilePath == null){
+            File workingDirectory = new File(System.getProperty("user.dir"));
+            FileChooser t = new FileChooser();
+            t.setInitialDirectory(workingDirectory);
+            t.setTitle("Save file");
+            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
+            t.setInitialFileName("Untitled");
+            currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            if(currentFile != null){
+                try{
+                    dataFilePath = currentFile.toPath().toAbsolutePath();
+                    try{
+                    ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
+                    }
+                    catch(Exception e){
+                        System.out.println("hi");
+                        return;
+                    }
+                    //If there is error in data, don't continue... ONLY way I can think of atm is to change method signature of saveData() to return boolean
+                    // current error: saves data regardless of error
+                    FileWriter writer = new FileWriter(currentFile);
+                    writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
+                    writer.close();
+                    ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
+                }catch (Exception ex) {
+                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                    err.show("Error", "Error while attempting to save file.");
+                }
+            }
+        }
+        else{
+            try{
+                ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
+                FileWriter writer = new FileWriter(currentFile);
+                writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
+                writer.close();
+                ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
+
+            }
+            catch(Exception e){
+                System.out.println("No active file found to save");
+            }
+        }
     }
 
     @Override
     public void handleLoadRequest() {
-        // TODO: NOT A PART OF HW 1
+        /*
+        select a file from filechooser
+        if file is tsd format, continue
+        if file isnt valid tsd, then throw error
+        validate data using AppData#loadData(path)
+        
+        */
     }
 
     @Override
@@ -96,24 +149,27 @@ public final class AppActions implements ActionComponent {
             t.setTitle("Save file");
             t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
             t.setInitialFileName("Untitled");
-            File saveFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
-            if(saveFile != null){
+            currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            if(currentFile != null){
                 try{
-                    FileWriter writer = new FileWriter(saveFile);
+                    FileWriter writer = new FileWriter(currentFile);
                     writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
                     writer.close();
+                    dataFilePath = currentFile.toPath().toAbsolutePath();
                 }catch (IOException ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
                     err.show("Error", "Error while attempting to save file.");
                 }
             }
+            applicationTemplate.getUIComponent().clear();
             return true;
         }
         else if(userSelection == Option.NO){
             ((AppUI)applicationTemplate.getUIComponent()).clear();
             return true;
         }
-        
-        return false;
+        else{
+            return false;
+        }
     }
 }

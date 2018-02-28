@@ -5,6 +5,7 @@ import javafx.scene.chart.XYChart;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -44,23 +45,41 @@ public final class TSDProcessor {
      */
     public void processString(String tsdString) throws Exception {
         AtomicBoolean hadAnError   = new AtomicBoolean(false);
+        AtomicInteger lineCount    = new AtomicInteger(1);
+        ArrayList<Integer> linesWithError = new ArrayList<>();
+        ArrayList<String> duplicateNames = new ArrayList<>();
         StringBuilder errorMessage = new StringBuilder();
+        AtomicBoolean containsDuplicates = new AtomicBoolean(false);
         Stream.of(tsdString.split("\n"))
               .map(line -> Arrays.asList(line.split("\t")))
               .forEach(list -> {
                   try {
                       String   name  = checkedname(list.get(0));
+                      if(duplicateNames.contains(name)){
+                          linesWithError.add((Integer)lineCount.get());
+                          containsDuplicates.set(true);
+                      }
+                      duplicateNames.add(name);
                       String   label = list.get(1);
                       String[] pair  = list.get(2).split(",");
                       Point2D  point = new Point2D(Double.parseDouble(pair[0]), Double.parseDouble(pair[1]));
                       dataLabels.put(name, label);
                       dataPoints.put(name, point);
-                  } catch (Exception e) {
+                  } catch (InvalidDataNameException e) {
+                      linesWithError.add((Integer)lineCount.get());
                       errorMessage.setLength(0);
-                      errorMessage.append(e.getClass().getSimpleName()).append(": ").append(e.getMessage());
+                      errorMessage.append("Error on line(s): ").append(linesWithError.toString());
                       hadAnError.set(true);
                   }
+                  lineCount.incrementAndGet();
               });
+        if(containsDuplicates.get()){
+            errorMessage.setLength(0);
+            errorMessage.append("Duplicate found on line(s): ").append(linesWithError.toString());
+            hadAnError.set(true);
+            
+        }
+        int len = tsdString.split("\n").length;
         if (errorMessage.length() > 0)
             throw new Exception(errorMessage.toString());
     }
