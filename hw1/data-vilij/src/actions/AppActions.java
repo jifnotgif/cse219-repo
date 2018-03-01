@@ -13,7 +13,13 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 import dataprocessors.AppData;
+import dataprocessors.TSDProcessor;
 import java.io.FileWriter;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.ScatterChart;
+import javafx.scene.image.WritableImage;
+import javax.imageio.ImageIO;
 import ui.AppUI;
 import vilij.components.ErrorDialog;
 
@@ -42,10 +48,12 @@ public final class AppActions implements ActionComponent {
                 promptToSave();
             }else{
                 applicationTemplate.getUIComponent().clear();
+                currentFile = null;
+                dataFilePath = null;
             }
         } catch (IOException ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error while attempting to create new file.");
+            err.show("Error", "Error encountered while attempting to create new file.");
         }
     }
 
@@ -62,31 +70,18 @@ public final class AppActions implements ActionComponent {
             if(currentFile != null){
                 try{
                     dataFilePath = currentFile.toPath().toAbsolutePath();
-                    try{
                     ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
-                    }
-                    catch(Exception e){
-                        System.out.println("hi");
-                        return;
-                    }
-                    //If there is error in data, don't continue... ONLY way I can think of atm is to change method signature of saveData() to return boolean
-                    // current error: saves data regardless of error
-                    FileWriter writer = new FileWriter(currentFile);
-                    writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
-                    writer.close();
                     ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
+                    
                 }catch (Exception ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Error", "Error while attempting to save file.");
+                    err.show("Error", "Error encountered while attempting to save file.");
                 }
             }
         }
         else{
             try{
                 ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
-                FileWriter writer = new FileWriter(currentFile);
-                writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
-                writer.close();
                 ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
 
             }
@@ -98,13 +93,26 @@ public final class AppActions implements ActionComponent {
 
     @Override
     public void handleLoadRequest() {
-        /*
-        select a file from filechooser
-        if file is tsd format, continue
-        if file isnt valid tsd, then throw error
-        validate data using AppData#loadData(path)
-        
-        */
+        File workingDirectory = new File(System.getProperty("user.dir"));
+        FileChooser t = new FileChooser();
+        t.setInitialDirectory(workingDirectory);
+        t.setTitle("Load file");
+        t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
+        currentFile = t.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+        if(currentFile != null){
+                try{
+                    dataFilePath = currentFile.toPath().toAbsolutePath();
+                    ConfirmationDialog existingData = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
+                    existingData.show("Clear workspace", "Are you sure you want to load new data? Any unsaved progress will be lost");
+                    Option userSelection = existingData.getSelectedOption();
+                    if(userSelection == Option.YES) ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
+                    else return;
+                    
+                }catch (Exception ex) {
+                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                    err.show("Error", "Error encountered while attempting to load file.");
+                }
+            }
     }
 
     @Override
@@ -114,7 +122,7 @@ public final class AppActions implements ActionComponent {
             System.exit(0);
         } catch (Exception ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error while attempting to close the application.");}
+            err.show("Error", "Error encountered while attempting to close the application.");}
     }
 
     @Override
@@ -123,7 +131,29 @@ public final class AppActions implements ActionComponent {
     }
 
     public void handleScreenshotRequest() throws IOException {
-        // TODO: NOT A PART OF HW 1
+        try{
+            if(!(((AppData)applicationTemplate.getDataComponent()).getProcessor().isChartEmpty())){
+                ScatterChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
+                WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+               
+                File workingDirectory = new File(System.getProperty("user.dir"));
+                FileChooser t = new FileChooser();
+                t.setInitialDirectory(workingDirectory);
+                t.setTitle("Save screenshot");
+                t.getExtensionFilters().add(new ExtensionFilter("PNG","*.png"));
+                t.setInitialFileName("Untitled");
+                
+                File file = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+                
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+     
+            }
+            
+        }
+        catch(Exception e){
+            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show("Error", "Error encountered while attempting take a screenshot");
+        }
     }
 
     /**
@@ -139,9 +169,9 @@ public final class AppActions implements ActionComponent {
      * @return <code>false</code> if the user presses the <i>cancel</i>, and <code>true</code> otherwise.
      */
     private boolean promptToSave() throws IOException {
-        ConfirmationDialog s = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
-        s.show("Save Current Work", "Would you like to save your current work?");
-        Option userSelection = s.getSelectedOption();
+        ConfirmationDialog save = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
+        save.show("Save Current Work", "Would you like to save your current work?");
+        Option userSelection = save.getSelectedOption();
         if(userSelection == Option.YES){
             File workingDirectory = new File(System.getProperty("user.dir"));
             FileChooser t = new FileChooser();
@@ -153,12 +183,12 @@ public final class AppActions implements ActionComponent {
             if(currentFile != null){
                 try{
                     FileWriter writer = new FileWriter(currentFile);
-                    writer.write(((AppUI)applicationTemplate.getUIComponent()).getUserText());
+                    writer.write(((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText());
                     writer.close();
                     dataFilePath = currentFile.toPath().toAbsolutePath();
                 }catch (IOException ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Error", "Error while attempting to save file.");
+                    err.show("Error", "Error encountered while attempting to save file.");
                 }
             }
             applicationTemplate.getUIComponent().clear();
@@ -172,4 +202,9 @@ public final class AppActions implements ActionComponent {
             return false;
         }
     }
+    
+    public File getCurrentFile(){
+        return currentFile;
+    }
+    
 }
