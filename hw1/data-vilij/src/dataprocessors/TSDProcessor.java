@@ -84,6 +84,9 @@ public final class TSDProcessor {
             throw new Exception(errorMessage.toString());
     }
 
+    public boolean isChartEmpty(){
+        return dataLabels.isEmpty();
+    }
     /**
      * Exports the data to the specified 2-D chart.
      *

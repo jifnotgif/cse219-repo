@@ -3,30 +3,39 @@ package ui;
 import actions.AppActions;
 import dataprocessors.AppData;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.CheckBox;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 
 import vilij.templates.ApplicationTemplate;
 import vilij.templates.UITemplate;
-import vilij.components.Dialog;
-import vilij.components.ErrorDialog;
 import vilij.propertymanager.PropertyManager;
 
 import static java.io.File.separator;
+import java.io.IOException;
+import java.util.Map;
+import javafx.collections.ListChangeListener;
+import javafx.scene.chart.XYChart.Series;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import static settings.AppPropertyTypes.SCREENSHOT_ICON;
 import static settings.AppPropertyTypes.SCREENSHOT_TOOLTIP;
-import vilij.components.DataComponent;
+import vilij.components.Dialog;
+import vilij.components.ErrorDialog;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
 import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
 /**
@@ -44,6 +53,7 @@ public final class AppUI extends UITemplate {
     private String                       scrnshoticonPath;
     private ScatterChart<Number, Number> chart;          // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
+    private CheckBox                     tickBox;
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
@@ -82,6 +92,13 @@ public final class AppUI extends UITemplate {
         loadButton.setOnAction(e -> applicationTemplate.getActionComponent().handleLoadRequest());
         exitButton.setOnAction(e -> applicationTemplate.getActionComponent().handleExitRequest());
         printButton.setOnAction(e -> applicationTemplate.getActionComponent().handlePrintRequest());
+        scrnshotButton.setOnAction(e -> {
+            try {
+                ((AppActions)applicationTemplate.getActionComponent()).handleScreenshotRequest();
+            } catch (IOException ex) {
+                System.out.println(ex + "");
+            }
+        });
     }
 
     @Override
@@ -117,12 +134,22 @@ public final class AppUI extends UITemplate {
         textArea.setPrefWidth(300);
         textArea.setPrefHeight(150);
 
-
-        displayButton = new Button("Display");
+        HBox hPane = new HBox();
+        hPane.setSpacing(10);
         
+        displayButton = new Button("Display");
+        tickBox = new CheckBox("read-only data");
+        
+        Region region = new Region();
+        HBox.setHgrow(region, Priority.ALWAYS);
+
+        hPane.getChildren().addAll(displayButton,region, tickBox);
+        
+        
+        pane.setAlignment(Pos.BOTTOM_CENTER);
         vPane.getChildren().add(boxTitle);
         vPane.getChildren().add(textArea);
-        vPane.getChildren().add(displayButton);
+        vPane.getChildren().add(hPane);
         
         
         NumberAxis xAxis = new NumberAxis();
@@ -131,7 +158,6 @@ public final class AppUI extends UITemplate {
         chart.setTitle("Data Visualization");
         chart.setMaxHeight((2*appPane.getHeight())/3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource("css/chart.css").toExternalForm());
-        
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(chart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
@@ -145,8 +171,8 @@ public final class AppUI extends UITemplate {
         appPane.getChildren().add(pane);
     }
     
-    public String getUserText(){
-        return textArea.getText();
+    public TextArea getTextArea(){
+        return textArea;
     }
     
     public Button getSaveButton(){
@@ -155,10 +181,10 @@ public final class AppUI extends UITemplate {
     
     private void setWorkspaceActions() {
         textArea.textProperty().addListener(e -> {
-            if(getUserText().equals(storedData)) hasNewText = false;
+            if(textArea.getText().equals(storedData)) hasNewText = false;
             else hasNewText = true;
             
-            if(!getUserText().equals("")){
+            if(!textArea.getText().equals("")){
                 newButton.setDisable(false);
                 saveButton.setDisable(false);
             }
@@ -170,7 +196,7 @@ public final class AppUI extends UITemplate {
         });
         
         displayButton.setOnAction((ActionEvent e) -> {
-           storedData = getUserText();
+           storedData = textArea.getText();
            try {
                     ((AppData)applicationTemplate.getDataComponent()).clear();
                     chart.getData().clear();
@@ -181,14 +207,33 @@ public final class AppUI extends UITemplate {
                }
             
            catch(Exception ex) {
-               System.out.println(ex+""); // Error should show up in GUI, not console
+                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                err.show("Error", "Error encountered while attempting display data");
            }
         });
         
-        /*
-        add a tick box for read-only data
-        event: grey out text area and make it uneditable
-        */
+        tickBox.selectedProperty().addListener( e ->{
+            if(tickBox.isSelected()){
+                textArea.setDisable(true);
+            }
+            else{
+                textArea.setDisable(false);
+            }
+            
+        });
         
+        chart.getData().addListener(new ListChangeListener() {
+
+            @Override
+            public void onChanged(ListChangeListener.Change c) {
+                if(!chart.getData().isEmpty()){
+                    scrnshotButton.setDisable(false);
+                }
+                else{
+                    scrnshotButton.setDisable(true);
+                }  
+                
+            }
+        });
     }
 }

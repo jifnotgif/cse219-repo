@@ -1,8 +1,10 @@
 package dataprocessors;
 
+import actions.AppActions;
 import dataprocessors.TSDProcessor.InvalidDataNameException;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.nio.file.Files;
 import ui.AppUI;
 import vilij.components.DataComponent;
@@ -31,12 +33,18 @@ public class AppData implements DataComponent {
     @Override
     public void loadData(Path dataFilePath) {
         try{
-//            processor.processString(dataString);
+            String data = new String(Files.readAllBytes(dataFilePath));
+            processor.processString(data);
+            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setText(data);
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Failed to load file", e.getMessage()+"" );
-            
+            err.show("Invalid data", e.getMessage() +" \nData points are in the following format:\n"
+                        + "@name label x,y\n\n"+
+                        "• Make sure each section is separated by a tab\n"
+                        + "• Each data value is stored in a single line\n"
+                        + "• Make sure there are no empty or incomplete data values" );
+           
         }
     }
 
@@ -46,14 +54,6 @@ public class AppData implements DataComponent {
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-//            if (e.getClass().equals(InvalidDataNameException.class)) {
-//                e.getLocalizedMessage().concat("\nData points are in the following format:\\n\"\n" +
-//"//                        + \"@name label x,y\\n\\n\"+\n" +
-//"//                        \"• Make sure each section is separated by a tab\\n\"\n" +
-//"//                        + \"• Each data value is stored in a single line\\n\"\n" +
-//"//                        + \"• Make sure there are no empty or incomplete data values\" ");
-//            } 
-            
             err.show("Invalid input", e.getMessage() +" \nData points are in the following format:\n"
                         + "@name label x,y\n\n"+
                         "• Make sure each section is separated by a tab\n"
@@ -68,12 +68,15 @@ public class AppData implements DataComponent {
     @Override
     public void saveData(Path dataFilePath) {
         try{
-            String data = new String(Files.readAllBytes(dataFilePath));
-            processor.processString(data);
+            processor.processString(((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText());
+//            FileWriter writer = new FileWriter(((AppActions)applicationTemplate.getActionComponent()).getCurrentFile());
+            FileWriter writer = new FileWriter(dataFilePath.toFile());
+            writer.write(((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText());
+            writer.close();
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Invalid input", e.getMessage() +" \nData points are in the following format:\n"
+            err.show("Invalid data", e.getMessage() +" \nData points are in the following format:\n"
                         + "@name label x,y\n\n"+
                         "• Make sure each section is separated by a tab\n"
                         + "• Each data value is stored in a single line\n"
@@ -92,4 +95,9 @@ public class AppData implements DataComponent {
     public void displayData() {
         processor.toChartData(((AppUI) applicationTemplate.getUIComponent()).getChart());
     }
+    
+    public TSDProcessor getProcessor(){
+        return processor;
+    }
+
 }
