@@ -6,6 +6,7 @@ functionality within the main workspace. -->
     <property_list>
         <!-- RESOURCE FILES AND FOLDERS -->
         <property name="DATA_RESOURCE_PATH" value="data"/>
+        <property name ="CSS_PATH" value="css/chart.css"/>
 
         <!-- USER INTERFACE ICON FILES -->
         <property name="SCREENSHOT_ICON" value="screenshot.png"/>
@@ -31,7 +32,11 @@ functionality within the main workspace. -->
         <property name="DATA_FILE_EXT_DESC" value="Tab-Separated Data File"/>
         <property name="TEXT_AREA" value="text area"/>
         <property name="SPECIFIED_FILE" value=" specified file"/>
-
+        
+        <property name="DISPLAY_NAME" value="Display"/>
+        <property name="READ_ONLY" value="read-only data"/>
+        <property name="CHART_TITLE" value="Data Visualization"/>
+        
     </property_list>
     <property_options_list/>
 </properties>
