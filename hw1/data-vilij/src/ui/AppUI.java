@@ -2,6 +2,7 @@ package ui;
 
 import actions.AppActions;
 import dataprocessors.AppData;
+import dataprocessors.TSDProcessor.InvalidDataNameException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.NumberAxis;
@@ -27,13 +28,12 @@ import vilij.propertymanager.PropertyManager;
 
 import static java.io.File.separator;
 import java.io.IOException;
-import java.util.Map;
 import javafx.collections.ListChangeListener;
-import javafx.scene.chart.XYChart.Series;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import static settings.AppPropertyTypes.SCREENSHOT_ICON;
-import static settings.AppPropertyTypes.SCREENSHOT_TOOLTIP;
+import javafx.scene.Node;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Tooltip;
+import static settings.AppPropertyTypes.*;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
@@ -51,14 +51,14 @@ public final class AppUI extends UITemplate {
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
     private String                       scrnshoticonPath;
-    private ScatterChart<Number, Number> chart;          // the chart where data will be displayed
+    private LineChart<Number, Number> chart;               // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
     private CheckBox                     tickBox;
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
     
-    public ScatterChart<Number, Number> getChart() { return chart; }
+    public LineChart<Number, Number> getChart() { return chart; }
     
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
@@ -109,10 +109,8 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        textArea.clear();
         ((AppData)applicationTemplate.getDataComponent()).clear();
         chart.getData().clear();
-        hasNewText = false;
     }
 
     private void layout() {
@@ -137,8 +135,8 @@ public final class AppUI extends UITemplate {
         HBox hPane = new HBox();
         hPane.setSpacing(10);
         
-        displayButton = new Button("Display");
-        tickBox = new CheckBox("read-only data");
+        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
+        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
@@ -154,10 +152,16 @@ public final class AppUI extends UITemplate {
         
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
-        chart = new ScatterChart<Number, Number>(xAxis, yAxis);
-        chart.setTitle("Data Visualization");
+        chart = new LineChart<Number, Number>(xAxis, yAxis);
+        chart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         chart.setMaxHeight((2*appPane.getHeight())/3);
-        this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource("css/chart.css").toExternalForm());
+        this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
+        
+        
+//        chart.lookupAll(".chart-symbol").forEach((symbol) -> {
+//            symbol.setStyle("-fx-background-insets: 0, 2; -fx-background-radius: 5px; -fx-padding: 5px;");
+//        });
+        
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(chart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
@@ -181,6 +185,7 @@ public final class AppUI extends UITemplate {
     
     private void setWorkspaceActions() {
         textArea.textProperty().addListener(e -> {
+            
             if(textArea.getText().equals(storedData)) hasNewText = false;
             else hasNewText = true;
             
@@ -192,23 +197,31 @@ public final class AppUI extends UITemplate {
                 newButton.setDisable(true);
                 saveButton.setDisable(true);
             }
+            
 
         });
         
         displayButton.setOnAction((ActionEvent e) -> {
-           storedData = textArea.getText();
-           try {
-                    ((AppData)applicationTemplate.getDataComponent()).clear();
-                    chart.getData().clear();
+            storedData = textArea.getText();
+            try {
+                    clear();
                     ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
                     if(hasNewText){
                         ((AppData)applicationTemplate.getDataComponent()).displayData();
                     }
                }
-            
-           catch(Exception ex) {
+            catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
                 ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                err.show("Error", "Error encountered while attempting display data");
+                    err.show("Invalid input", error.getMessage() +" \n\nData points are in the following format:\n"
+                        + "@name label x,y\n\n"+
+                        "• Make sure each section is separated by a tab\n"
+                        + "• Each data value is stored in a single line\n"
+                        + "• Make sure there are no empty or incomplete data values\n" 
+                        + "• Every data point has a unique name");
+            }
+            catch(Exception ex) {
+                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                err.show("Display data", ex.getMessage() + "");
            }
         });
         
