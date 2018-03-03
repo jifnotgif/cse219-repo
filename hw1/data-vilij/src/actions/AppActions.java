@@ -13,15 +13,16 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 import dataprocessors.AppData;
-import dataprocessors.TSDProcessor;
 import java.io.FileWriter;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.LineChart;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.image.WritableImage;
 import javax.imageio.ImageIO;
 import ui.AppUI;
 import vilij.components.ErrorDialog;
+import static settings.AppPropertyTypes.*;
 
 /**
  * This is the concrete implementation of the action handlers required by the application.
@@ -64,7 +65,7 @@ public final class AppActions implements ActionComponent {
             FileChooser t = new FileChooser();
             t.setInitialDirectory(workingDirectory);
             t.setTitle("Save file");
-            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
+            t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()),applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
             t.setInitialFileName("Untitled");
             currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
             if(currentFile != null){
@@ -110,7 +111,12 @@ public final class AppActions implements ActionComponent {
                     
                 }catch (Exception ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Error", "Error encountered while attempting to load file.");
+                    err.show("Invalid input", ex.getMessage() +" \n\nData points are in the following format:\n"
+                        + "@name label x,y\n\n"+
+                        "• Make sure each section is separated by a tab\n"
+                        + "• Each data value is stored in a single line\n"
+                        + "• Make sure there are no empty or incomplete data values\n" 
+                        + "• Every data point has a unique name");
                 }
             }
     }
@@ -133,7 +139,7 @@ public final class AppActions implements ActionComponent {
     public void handleScreenshotRequest() throws IOException {
         try{
             if(!(((AppData)applicationTemplate.getDataComponent()).getProcessor().isChartEmpty())){
-                ScatterChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
+                LineChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
                 WritableImage image = chart.snapshot(new SnapshotParameters(), null);
                
                 File workingDirectory = new File(System.getProperty("user.dir"));
@@ -146,13 +152,16 @@ public final class AppActions implements ActionComponent {
                 File file = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
                 
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-     
             }
             
         }
-        catch(Exception e){
+        catch(IOException e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error encountered while attempting take a screenshot");
+            err.show("Error", "Error encountered while attempting create a screenshot");
+        }
+        catch(IllegalArgumentException e){
+            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show("Error", "Failed to save screenshot because no output specified");
         }
     }
 
@@ -170,13 +179,13 @@ public final class AppActions implements ActionComponent {
      */
     private boolean promptToSave() throws IOException {
         ConfirmationDialog save = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
-        save.show("Save Current Work", "Would you like to save your current work?");
+        save.show(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK.name()));
         Option userSelection = save.getSelectedOption();
         if(userSelection == Option.YES){
             File workingDirectory = new File(System.getProperty("user.dir"));
             FileChooser t = new FileChooser();
             t.setInitialDirectory(workingDirectory);
-            t.setTitle("Save file");
+            t.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()));
             t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
             t.setInitialFileName("Untitled");
             currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
