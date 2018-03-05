@@ -7,6 +7,8 @@ import vilij.components.DataComponent;
 import vilij.templates.ApplicationTemplate;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.scene.control.TextArea;
 import vilij.components.Dialog;
@@ -22,7 +24,7 @@ public class AppData implements DataComponent {
 
     private TSDProcessor        processor;
     private ApplicationTemplate applicationTemplate;
-    private String              data;
+    private ArrayList<String>   dataEntries;
 
     public AppData(ApplicationTemplate applicationTemplate) {
         this.processor = new TSDProcessor();
@@ -32,31 +34,33 @@ public class AppData implements DataComponent {
     @Override
     public void loadData(Path dataFilePath) {
         try{
-            AtomicInteger index = new AtomicInteger(10);
+            AtomicInteger index = new AtomicInteger(0);
             TextArea textbox = ((AppUI)applicationTemplate.getUIComponent()).getTextArea();
-            data = new String(Files.readAllBytes(dataFilePath));
+            String data = new String(Files.readAllBytes(dataFilePath));
             processor.processString(data);
+            
             int len = data.split("\n").length;
-            String[] dataEntries =data.split("\n");
+            dataEntries = new ArrayList<>(Arrays.asList(data.split("\n")));
             if(len >10){
                 String output = new String();
                 for(int i =0; i< 10; i++){
-                    output += dataEntries[i]+"\n";
+                    output += dataEntries.get(0)+"\n";
+                    dataEntries.remove(0);
                 }
                 ErrorDialog manyLines = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                manyLines.show("A lot of data", "Loaded data consists of "+ len + " lines. Showing only the first 10 in the text area.");
+                manyLines.show("Loading data", "Loaded data consists of "+ len + " lines. Showing only the first 10 in the text area.");
                 textbox.setText(output);
-                displayData();
             }
             else{
                 textbox.setText(data);
-                displayData();
             }
-            
             textbox.textProperty().addListener(e ->{
-                if(textbox.getText().split("\n").length < 10 && index.get() < len){
-                    textbox.appendText(dataEntries[index.getAndIncrement()]+ "\n");
+                if(textbox.getText().isEmpty() && dataEntries.isEmpty()) return;
+                if(textbox.getText().split("\n").length < 10 && index.get() < dataEntries.size()){
+                    textbox.appendText(dataEntries.get(index.getAndIncrement())+ "\n");
+                    dataEntries.remove(0);   
                 }
+                index.set(0);
             });
             
         }
@@ -74,8 +78,6 @@ public class AppData implements DataComponent {
 
     public void loadData(String dataString) throws Exception {
         try{
-            
-            //bug : won't update when points are deleted
             processor.processString(dataString);
         }
         catch(Exception e){
@@ -89,10 +91,13 @@ public class AppData implements DataComponent {
     @Override
     public void saveData(Path dataFilePath) {
         try{
-            String data = new String(Files.readAllBytes(dataFilePath));
-            processor.processString(data);
+            String dataString =((AppUI)applicationTemplate.getUIComponent()).getStoredData();
+            if(dataString == null) {
+                dataString = ((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText();
+            }
+            processor.processString(dataString);
             FileWriter writer = new FileWriter(dataFilePath.toFile());
-            writer.write(data);
+            writer.write(dataString);
             writer.close();
         }
         catch(Exception e){
@@ -122,4 +127,11 @@ public class AppData implements DataComponent {
         return processor;
     }
 
+    public ArrayList<String> getFileData(){
+        return dataEntries;
+    }
+    
+    public void resetData(){
+        dataEntries.clear();
+    }
 }

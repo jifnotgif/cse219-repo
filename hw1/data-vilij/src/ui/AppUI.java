@@ -6,7 +6,6 @@ import dataprocessors.TSDProcessor.InvalidDataNameException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -20,7 +19,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
 
 import vilij.templates.ApplicationTemplate;
 import vilij.templates.UITemplate;
@@ -28,11 +26,10 @@ import vilij.propertymanager.PropertyManager;
 
 import static java.io.File.separator;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javafx.collections.ListChangeListener;
-import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.Tooltip;
 import static settings.AppPropertyTypes.*;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
@@ -51,7 +48,7 @@ public final class AppUI extends UITemplate {
     @SuppressWarnings("FieldCanBeLocal")
     private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
     private String                       scrnshoticonPath;
-    private LineChart<Number, Number> chart;               // the chart where data will be displayed
+    private LineChart<Number, Number>    chart;               // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
     private CheckBox                     tickBox;
     private TextArea                     textArea;       // text area for new data input
@@ -105,6 +102,7 @@ public final class AppUI extends UITemplate {
     public void initialize() {
         layout();
         setWorkspaceActions();
+        
     }
 
     @Override
@@ -157,11 +155,6 @@ public final class AppUI extends UITemplate {
         chart.setMaxHeight((2*appPane.getHeight())/3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
         
-        
-//        chart.lookupAll(".chart-symbol").forEach((symbol) -> {
-//            symbol.setStyle("-fx-background-insets: 0, 2; -fx-background-radius: 5px; -fx-padding: 5px;");
-//        });
-        
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(chart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
@@ -183,13 +176,17 @@ public final class AppUI extends UITemplate {
         return saveButton;
     }
     
+    public String getStoredData(){
+        return storedData;
+    }
+    
     private void setWorkspaceActions() {
         textArea.textProperty().addListener(e -> {
             
             if(textArea.getText().equals(storedData)) hasNewText = false;
             else hasNewText = true;
             
-            if(!textArea.getText().equals("")){
+            if(!textArea.getText().isEmpty()){
                 newButton.setDisable(false);
                 saveButton.setDisable(false);
             }
@@ -197,15 +194,33 @@ public final class AppUI extends UITemplate {
                 newButton.setDisable(true);
                 saveButton.setDisable(true);
             }
-            
 
         });
         
-        displayButton.setOnAction((ActionEvent e) -> {
-            storedData = textArea.getText();
+        displayButton.setOnAction(e -> {
             try {
+                    String currentText = textArea.getText();
+                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split("\n")));
+                    
+                    ArrayList<String> fileDataEntries = ((AppData)applicationTemplate.getDataComponent()).getFileData();
+                    
+                    if(fileDataEntries != null){
+                        for(String j : fileDataEntries ){
+                            if(!newDataEntries.contains(j)){
+                                newDataEntries.add(j);
+                            }
+                        }
+                    }
+                    
+                    if(((AppActions)applicationTemplate.getActionComponent()).getDataPath() != null){
+                        storedData = String.join("\n", newDataEntries);
+                    }
+                    else storedData = textArea.getText();
+                    
                     clear();
+                    
                     ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
+                    
                     if(hasNewText){
                         ((AppData)applicationTemplate.getDataComponent()).displayData();
                     }
