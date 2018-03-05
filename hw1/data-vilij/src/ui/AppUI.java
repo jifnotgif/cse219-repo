@@ -55,6 +55,8 @@ public final class AppUI extends UITemplate {
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
     
+    private final String                 newLine = "\n";
+    
     public LineChart<Number, Number> getChart() { return chart; }
     
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
@@ -93,7 +95,7 @@ public final class AppUI extends UITemplate {
             try {
                 ((AppActions)applicationTemplate.getActionComponent()).handleScreenshotRequest();
             } catch (IOException ex) {
-                System.out.println(ex + "");
+                System.out.println(ex.getMessage());
             }
         });
     }
@@ -122,8 +124,8 @@ public final class AppUI extends UITemplate {
         VBox vPane = new VBox(10);
         vPane.setSpacing(10);
  
-        Label boxTitle = new Label("Data File");
-        boxTitle.setFont(Font.font("Arial", 18));
+        Label boxTitle = new Label(applicationTemplate.manager.getPropertyValue(TEXTBOX_TITLE.name()));
+        boxTitle.setFont(Font.font(applicationTemplate.manager.getPropertyValue(FONT.name()), 18));
         
         
         textArea = new TextArea();
@@ -150,7 +152,7 @@ public final class AppUI extends UITemplate {
         
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
-        chart = new LineChart<Number, Number>(xAxis, yAxis);
+        chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         chart.setMaxHeight((2*appPane.getHeight())/3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
@@ -200,7 +202,7 @@ public final class AppUI extends UITemplate {
         displayButton.setOnAction(e -> {
             try {
                     String currentText = textArea.getText();
-                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split("\n")));
+                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(newLine)));
                     
                     ArrayList<String> fileDataEntries = ((AppData)applicationTemplate.getDataComponent()).getFileData();
                     
@@ -213,7 +215,7 @@ public final class AppUI extends UITemplate {
                     }
                     
                     if(((AppActions)applicationTemplate.getActionComponent()).getDataPath() != null){
-                        storedData = String.join("\n", newDataEntries);
+                        storedData = String.join(newLine, newDataEntries);
                     }
                     else storedData = textArea.getText();
                     
@@ -227,16 +229,11 @@ public final class AppUI extends UITemplate {
                }
             catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
                 ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Invalid input", error.getMessage() +" \n\nData points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab\n"
-                        + "• Each data value is stored in a single line\n"
-                        + "• Make sure there are no empty or incomplete data values\n" 
-                        + "• Every data point has a unique name");
+                    err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), error.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
             }
             catch(Exception ex) {
                 ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                err.show("Display data", ex.getMessage() + "");
+                err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
            }
         });
         

@@ -1,6 +1,5 @@
 package dataprocessors;
 
-import com.sun.javafx.charts.Legend;
 import javafx.geometry.Point2D;
 import javafx.scene.chart.XYChart;
 
@@ -34,7 +33,9 @@ public final class TSDProcessor {
 
     private Map<String, String>  dataLabels;
     private Map<String, Point2D> dataPoints;
-
+    private final String         newLine = "\n";
+    private final String         nameSymbol ="@";
+    private final String         tab = "\t";
     public TSDProcessor() {
         dataLabels = new HashMap<>();
         dataPoints = new HashMap<>();
@@ -56,8 +57,8 @@ public final class TSDProcessor {
         
         StringBuilder errorMessage = new StringBuilder();
         
-        Stream.of(tsdString.split("\n"))
-              .map(line -> Arrays.asList(line.split("\t")))
+        Stream.of(tsdString.split(newLine))
+              .map(line -> Arrays.asList(line.split(tab)))
               .forEach(list -> {
                   try {
                       String   name  = checkedname(list.get(0));
@@ -77,13 +78,13 @@ public final class TSDProcessor {
                       linesWithError.add((Integer)lineCount.get());
                       errorMessage.setLength(0);
                       // if all data points with error are wanted, reate a new arraylist of names and append to message instead of list.get(0)
-                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append("\n");
+                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(newLine);
                       hadAnError.set(true);
                   }
                   lineCount.incrementAndGet();
               });
         if(containsDuplicates.get()){
-            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append("\n");
+            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(newLine);
             hadAnError.set(true);
             
         }
@@ -125,7 +126,7 @@ public final class TSDProcessor {
     }
     
     private void calculateAverageLine(XYChart<Number,Number> chart){
-        XYChart.Series<Number,Number> averageLine = new XYChart.Series<Number,Number>();
+        XYChart.Series<Number,Number> averageLine = new XYChart.Series<>();
         averageLine.setName("Average Y-value");
         double y = dataPoints.values().stream().mapToDouble(Point2D::getY).reduce(0, (a,b) -> a+b)/dataPoints.size();
         double x1 = dataPoints.values().stream().mapToDouble(Point2D::getX).min().orElse(0.0);
@@ -149,7 +150,7 @@ public final class TSDProcessor {
     }
 
     private String checkedname(String name) throws InvalidDataNameException {
-        if (!name.startsWith("@"))
+        if (!name.startsWith(nameSymbol))
             throw new InvalidDataNameException(name);
         return name;
     }
