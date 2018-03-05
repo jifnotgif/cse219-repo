@@ -13,11 +13,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
 import dataprocessors.AppData;
-import java.io.FileWriter;
+import java.io.FileWriter;;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.ScatterChart;
 import javafx.scene.image.WritableImage;
 import javax.imageio.ImageIO;
 import ui.AppUI;
@@ -48,7 +47,9 @@ public final class AppActions implements ActionComponent {
             if(dataFilePath == null){
                 promptToSave();
             }else{
-                applicationTemplate.getUIComponent().clear();
+                ((AppUI)applicationTemplate.getUIComponent()).clear();
+                ((AppData)applicationTemplate.getDataComponent()).resetData();
+                ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setText("");
                 currentFile = null;
                 dataFilePath = null;
             }
@@ -82,12 +83,15 @@ public final class AppActions implements ActionComponent {
         }
         else{
             try{
+                //assumed that user hit display button before saving. fix bug
+                if(((AppUI)applicationTemplate.getUIComponent()).getStoredData() == null) throw new NullPointerException("Display data before saving");
                 ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
                 ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
 
             }
-            catch(Exception e){
-                System.out.println("No active file found to save");
+            catch(NullPointerException e){
+                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                    err.show("Save failed", e.getMessage() );
             }
         }
     }
@@ -106,7 +110,11 @@ public final class AppActions implements ActionComponent {
                     ConfirmationDialog existingData = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
                     existingData.show("Clear workspace", "Are you sure you want to load new data? Any unsaved progress will be lost");
                     Option userSelection = existingData.getSelectedOption();
-                    if(userSelection == Option.YES) ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
+                    if(userSelection == Option.YES) {
+                        ((AppUI)applicationTemplate.getUIComponent()).clear();
+                        ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setText("");
+                        ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
+                    }
                     else return;
                     
                 }catch (Exception ex) {
@@ -216,4 +224,7 @@ public final class AppActions implements ActionComponent {
         return currentFile;
     }
     
+    public Path getDataPath(){
+        return dataFilePath;
+    }  
 }

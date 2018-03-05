@@ -87,16 +87,9 @@ public final class TSDProcessor {
             hadAnError.set(true);
             
         }
-        int len = tsdString.split("\n").length;
         if (errorMessage.length() > 0)
             throw new InvalidDataNameException(errorMessage.toString());
         
-        // dont want to throw an error? use straight dialog instead of throwing an exception
-        if (len > 10){
-//            overflowMessage.setLength(0);
-//            overflowMessage.append("Loaded data consists of ").append(lineCount.toString()).append(" lines. Showing only the first 10 in the text area.");
-//            throw new Exception(overflowMessage.toString());
-        }
     }
 
     public boolean isChartEmpty(){
@@ -161,5 +154,4 @@ public final class TSDProcessor {
         return name;
     }
     
-   
 }
