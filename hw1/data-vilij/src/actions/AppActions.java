@@ -55,19 +55,19 @@ public final class AppActions implements ActionComponent {
             }
         } catch (IOException ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error encountered while attempting to create new file.");
+            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
         }
     }
 
     @Override
     public void handleSaveRequest() { 
         if(dataFilePath == null){
-            File workingDirectory = new File(System.getProperty("user.dir"));
+            File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
             FileChooser t = new FileChooser();
             t.setInitialDirectory(workingDirectory);
-            t.setTitle("Save file");
+            t.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_DIALOG_TITLE.name()));
             t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()),applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
-            t.setInitialFileName("Untitled");
+            t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
             currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
             if(currentFile != null){
                 try{
@@ -77,38 +77,38 @@ public final class AppActions implements ActionComponent {
                     
                 }catch (Exception ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Error", "Error encountered while attempting to save file.");
+                    err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
                 }
             }
         }
         else{
             try{
                 //assumed that user hit display button before saving. fix bug
-                if(((AppUI)applicationTemplate.getUIComponent()).getStoredData() == null) throw new NullPointerException("Display data before saving");
+                if(((AppUI)applicationTemplate.getUIComponent()).getStoredData() == null) throw new NullPointerException(applicationTemplate.manager.getPropertyValue(READ_DATA_FAIL.name()));
                 ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
                 ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
 
             }
             catch(NullPointerException e){
                 ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Save failed", e.getMessage() );
+                    err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), e.getMessage() );
             }
         }
     }
 
     @Override
     public void handleLoadRequest() {
-        File workingDirectory = new File(System.getProperty("user.dir"));
+        File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
         FileChooser t = new FileChooser();
         t.setInitialDirectory(workingDirectory);
-        t.setTitle("Load file");
-        t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
+        t.setTitle(applicationTemplate.manager.getPropertyValue(LOAD_DIALOG_TITLE.name()));
+        t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()), applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
         currentFile = t.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
         if(currentFile != null){
                 try{
                     dataFilePath = currentFile.toPath().toAbsolutePath();
                     ConfirmationDialog existingData = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
-                    existingData.show("Clear workspace", "Are you sure you want to load new data? Any unsaved progress will be lost");
+                    existingData.show(applicationTemplate.manager.getPropertyValue(CLEAR_INTERFACE_TITLE.name()), applicationTemplate.manager.getPropertyValue(CLEAR_INTERFACE_DESC.name()));
                     Option userSelection = existingData.getSelectedOption();
                     if(userSelection == Option.YES) {
                         ((AppUI)applicationTemplate.getUIComponent()).clear();
@@ -119,12 +119,7 @@ public final class AppActions implements ActionComponent {
                     
                 }catch (Exception ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Invalid input", ex.getMessage() +" \n\nData points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab\n"
-                        + "• Each data value is stored in a single line\n"
-                        + "• Make sure there are no empty or incomplete data values\n" 
-                        + "• Every data point has a unique name");
+                    err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), ex.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
                 }
             }
     }
@@ -132,11 +127,19 @@ public final class AppActions implements ActionComponent {
     @Override
     public void handleExitRequest() {
         try {
-            applicationTemplate.stop();
-            System.exit(0);
+            ConfirmationDialog exitRequest = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
+            exitRequest.show(applicationTemplate.manager.getPropertyValue(EXIT_TITLE.name()), applicationTemplate.manager.getPropertyValue(EXIT_WHILE_RUNNING_WARNING.name()));
+            Option userSelection = exitRequest.getSelectedOption();
+            if(userSelection == Option.YES) {
+                applicationTemplate.stop();
+                System.exit(0);
+            }
+            
         } catch (Exception ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error encountered while attempting to close the application.");}
+            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(EXIT_APP_ERROR.name()));
+    
+        }
     }
 
     @Override
@@ -150,26 +153,26 @@ public final class AppActions implements ActionComponent {
                 LineChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
                 WritableImage image = chart.snapshot(new SnapshotParameters(), null);
                
-                File workingDirectory = new File(System.getProperty("user.dir"));
+                File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
                 FileChooser t = new FileChooser();
                 t.setInitialDirectory(workingDirectory);
-                t.setTitle("Save screenshot");
-                t.getExtensionFilters().add(new ExtensionFilter("PNG","*.png"));
-                t.setInitialFileName("Untitled");
+                t.setTitle(applicationTemplate.manager.getPropertyValue(SCREENSHOT_DIALOG_TITLE.name()));
+                t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(IMAGE_FILE_TYPE_NAME.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_FILE_EXT.name())));
+                t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
                 
                 File file = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
                 
-                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), applicationTemplate.manager.getPropertyValue(IMAGE_FILE_TYPE_PARAM.name()), file);
             }
             
         }
         catch(IOException e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Error encountered while attempting create a screenshot");
+            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_FILE_ERROR.name()));
         }
         catch(IllegalArgumentException e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Error", "Failed to save screenshot because no output specified");
+            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_OUTPUT_ERROR.name()));
         }
     }
 
@@ -190,12 +193,12 @@ public final class AppActions implements ActionComponent {
         save.show(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK.name()));
         Option userSelection = save.getSelectedOption();
         if(userSelection == Option.YES){
-            File workingDirectory = new File(System.getProperty("user.dir"));
+            File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
             FileChooser t = new FileChooser();
             t.setInitialDirectory(workingDirectory);
             t.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()));
-            t.getExtensionFilters().add(new ExtensionFilter("Tab-Separated Data File","*.tsd"));
-            t.setInitialFileName("Untitled");
+            t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()),applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
+            t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
             currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
             if(currentFile != null){
                 try{
@@ -205,7 +208,7 @@ public final class AppActions implements ActionComponent {
                     dataFilePath = currentFile.toPath().toAbsolutePath();
                 }catch (IOException ex) {
                     ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show("Error", "Error encountered while attempting to save file.");
+                    err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
                 }
             }
             applicationTemplate.getUIComponent().clear();
