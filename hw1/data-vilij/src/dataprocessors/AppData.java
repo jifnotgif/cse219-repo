@@ -11,6 +11,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.scene.control.TextArea;
+import static settings.AppPropertyTypes.INPUT;
+import static settings.AppPropertyTypes.INPUT_TITLE;
+import static settings.AppPropertyTypes.LOADED_MANY_LINES_DESC_1;
+import static settings.AppPropertyTypes.LOADED_MANY_LINES_DESC_2;
+import static settings.AppPropertyTypes.LOADED_MANY_LINES_DIALOG_TITLE;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
 
@@ -25,6 +30,7 @@ public class AppData implements DataComponent {
     private TSDProcessor        processor;
     private ApplicationTemplate applicationTemplate;
     private ArrayList<String>   dataEntries;
+    private final String        newLine = "\n";
 
     public AppData(ApplicationTemplate applicationTemplate) {
         this.processor = new TSDProcessor();
@@ -39,25 +45,34 @@ public class AppData implements DataComponent {
             String data = new String(Files.readAllBytes(dataFilePath));
             processor.processString(data);
             
-            int len = data.split("\n").length;
-            dataEntries = new ArrayList<>(Arrays.asList(data.split("\n")));
+            int len = data.split(newLine).length;
+            dataEntries = new ArrayList<>(Arrays.asList(data.split(newLine)));
+            String output = new String();
+              
             if(len >10){
-                String output = new String();
                 for(int i =0; i< 10; i++){
-                    output += dataEntries.get(0)+"\n";
+                    output += dataEntries.get(0) + newLine;
                     dataEntries.remove(0);
-                }
+                } 
                 ErrorDialog manyLines = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                manyLines.show("Loading data", "Loaded data consists of "+ len + " lines. Showing only the first 10 in the text area.");
-                textbox.setText(output);
+                manyLines.show(applicationTemplate.manager.getPropertyValue(LOADED_MANY_LINES_DIALOG_TITLE.name()), 
+                        applicationTemplate.manager.getPropertyValue(LOADED_MANY_LINES_DESC_1.name())
+                                + len 
+                                    + applicationTemplate.manager.getPropertyValue(LOADED_MANY_LINES_DESC_2.name()));
+                
             }
             else{
-                textbox.setText(data);
+                for(int i =0; i< len; i++){
+                    output += dataEntries.get(0) + newLine;
+                    dataEntries.remove(0);
+                } 
             }
+            textbox.setText(output);
+            
             textbox.textProperty().addListener(e ->{
                 if(textbox.getText().isEmpty() && dataEntries.isEmpty()) return;
-                if(textbox.getText().split("\n").length < 10 && index.get() < dataEntries.size()){
-                    textbox.appendText(dataEntries.get(index.getAndIncrement())+ "\n");
+                if(textbox.getText().split(newLine).length < 10 && index.get() < dataEntries.size()){
+                    textbox.appendText(dataEntries.get(index.getAndIncrement())+ newLine);
                     dataEntries.remove(0);   
                 }
                 index.set(0);
@@ -66,12 +81,8 @@ public class AppData implements DataComponent {
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Invalid data", e.getMessage() +" \n\nData points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab\n"
-                        + "• Each data value is stored in a single line\n"
-                        + "• Make sure there are no empty or incomplete data values\n" 
-                        + "• Every data point has a unique name" );
+            err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), 
+                    e.getMessage() +applicationTemplate.manager.getPropertyValue(INPUT.name()));
            
         }
     }
@@ -102,13 +113,8 @@ public class AppData implements DataComponent {
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show("Invalid data", e.getMessage() +" \nData points are in the following format:\n"
-                        + "@name label x,y\n\n"+
-                        "• Make sure each section is separated by a tab\n"
-                        + "• Each data value is stored in a single line\n"
-                        + "• Make sure there are no empty or incomplete data values\n\n"
-                        + "• Every data point has a unique name");
-           
+            err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), 
+                    e.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
         }
         
     }
