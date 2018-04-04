@@ -63,6 +63,25 @@ public class Main extends Application {
         });
         buttonBox.getChildren().add(piBtn);
         
+        Button imgBtn = new Button();
+        imgBtn.setText("Mandelbrot");
+        imgBtn.setOnAction(e -> {
+            if(task != null)
+                task.cancel();
+            task = new MandelbrotTask();
+            final ImageView viewer = new ImageView();
+            viewer.setFitHeight(500);
+            viewer.setFitWidth(500);
+            root.setCenter(viewer);
+            primaryStage.sizeToScene();
+            task.getPartialResultProperty().addListener
+                ((obs, os, ns) -> viewer.setImage((Image) ns));
+            Thread t = new Thread(task);
+            t.setDaemon(true);
+            t.start();
+        });
+        buttonBox.getChildren().add(imgBtn);
+        
         Button cancelBtn = new Button();
         cancelBtn.setText("Cancel");
         cancelBtn.setOnAction(e -> cancelTask());
