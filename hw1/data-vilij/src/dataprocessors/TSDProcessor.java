@@ -33,9 +33,9 @@ public final class TSDProcessor {
 
     private Map<String, String>  dataLabels;
     private Map<String, Point2D> dataPoints;
-    private final String         newLine = "\n";
-    private final String         nameSymbol ="@";
-    private final String         tab = "\t";
+    private final String         NEW_LINE = "\n";
+    private final String         NAME_SYMBOL ="@";
+    private final String         TAB = "\t";
     public TSDProcessor() {
         dataLabels = new HashMap<>();
         dataPoints = new HashMap<>();
@@ -57,8 +57,8 @@ public final class TSDProcessor {
         
         StringBuilder errorMessage = new StringBuilder();
         
-        Stream.of(tsdString.split(newLine))
-              .map(line -> Arrays.asList(line.split(tab)))
+        Stream.of(tsdString.split(NEW_LINE))
+              .map(line -> Arrays.asList(line.split(TAB)))
               .forEach(list -> {
                   try {
                       String   name  = checkedname(list.get(0));
@@ -78,13 +78,13 @@ public final class TSDProcessor {
                       linesWithError.add((Integer)lineCount.get());
                       errorMessage.setLength(0);
                       // if all data points with error are wanted, reate a new arraylist of names and append to message instead of list.get(0)
-                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(newLine);
+                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);
                       hadAnError.set(true);
                   }
                   lineCount.incrementAndGet();
               });
         if(containsDuplicates.get()){
-            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(newLine);
+            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);
             hadAnError.set(true);
             
         }
@@ -150,7 +150,7 @@ public final class TSDProcessor {
     }
 
     private String checkedname(String name) throws InvalidDataNameException {
-        if (!name.startsWith(nameSymbol))
+        if (!name.startsWith(NAME_SYMBOL))
             throw new InvalidDataNameException(name);
         return name;
     }

@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.RadioButton;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -55,7 +56,7 @@ public final class AppUI extends UITemplate {
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
     
-    private final String                 newLine = "\n";
+    private final String                 NEW_LINE = "\n";
     
     public LineChart<Number, Number> getChart() { return chart; }
     
@@ -109,7 +110,7 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        ((AppData)applicationTemplate.getDataComponent()).clear();
+        storedData = "";
         chart.getData().clear();
     }
 
@@ -201,8 +202,9 @@ public final class AppUI extends UITemplate {
         
         displayButton.setOnAction(e -> {
             try {
+                    clear();
                     String currentText = textArea.getText();
-                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(newLine)));
+                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
                     
                     ArrayList<String> fileDataEntries = ((AppData)applicationTemplate.getDataComponent()).getFileData();
                     
@@ -215,11 +217,10 @@ public final class AppUI extends UITemplate {
                     }
                     
                     if(((AppActions)applicationTemplate.getActionComponent()).getDataPath() != null){
-                        storedData = String.join(newLine, newDataEntries);
+                        storedData = String.join(NEW_LINE, newDataEntries);
                     }
                     else storedData = textArea.getText();
                     
-                    clear();
                     
                     ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
                     

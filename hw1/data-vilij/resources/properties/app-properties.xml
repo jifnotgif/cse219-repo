@@ -48,7 +48,7 @@ functionality within the main workspace. -->
         <property name="CLEAR_INTERFACE_DESC" value="Are you sure you want to load new data? Any unsaved progress will be lost"/>
         <property name="EXIT_APP_ERROR" value="Error encountered while attempting to close the application."/>
         <property name="SCREENSHOT_FILE_ERROR" value="Error encountered while attempting create a screenshot"/>
-        <property name="SCREENSHOT_OUTPUT_ERROR" value="Failed to save screenshot because no output specified"/> 
+        <property name="SCREENSHOT_OUTPUT_ERROR" value="Failed to save screenshot because no output was specified"/> 
         
         <property name="LOADED_MANY_LINES_DESC_1" value= "Loaded data consists of "/>
         <property name="LOADED_MANY_LINES_DESC_2" value= " lines. Showing only the first 10 in the text area."/>

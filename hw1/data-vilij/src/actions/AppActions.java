@@ -47,12 +47,12 @@ public final class AppActions implements ActionComponent {
             if(dataFilePath == null){
                 promptToSave();
             }else{
-                ((AppUI)applicationTemplate.getUIComponent()).clear();
-                ((AppData)applicationTemplate.getDataComponent()).resetData();
-                ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setText("");
-                currentFile = null;
-                dataFilePath = null;
+                ((AppData)applicationTemplate.getDataComponent()).resetData();  
             }
+            ((AppUI)applicationTemplate.getUIComponent()).clear();
+            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
+            currentFile = null;
+            dataFilePath = null;
         } catch (IOException ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
@@ -62,48 +62,30 @@ public final class AppActions implements ActionComponent {
     @Override
     public void handleSaveRequest() { 
         if(dataFilePath == null){
-            File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
-            FileChooser t = new FileChooser();
-            t.setInitialDirectory(workingDirectory);
-            t.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_DIALOG_TITLE.name()));
-            t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()),applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
-            t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
-            currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
-            if(currentFile != null){
-                try{
-                    dataFilePath = currentFile.toPath().toAbsolutePath();
-                    ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
-                    ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
+            FileChooser fc = new FileChooser();
+            initializeFileChooser(fc, false);
+            currentFile = fc.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            if(currentFile == null){
+                return;
+            }
+        }
+        try{
+            dataFilePath = currentFile.toPath().toAbsolutePath();
+            ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
+            ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
                     
-                }catch (Exception ex) {
-                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
-                }
-            }
+        }catch (Exception ex) {
+            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
         }
-        else{
-            try{
-                //assumed that user hit display button before saving. fix bug
-                if(((AppUI)applicationTemplate.getUIComponent()).getStoredData() == null) throw new NullPointerException(applicationTemplate.manager.getPropertyValue(READ_DATA_FAIL.name()));
-                ((AppData)applicationTemplate.getDataComponent()).saveData(dataFilePath);
-                ((AppUI)applicationTemplate.getUIComponent()).getSaveButton().setDisable(true);
-
-            }
-            catch(NullPointerException e){
-                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), e.getMessage() );
-            }
-        }
+            
     }
 
     @Override
     public void handleLoadRequest() {
-        File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
-        FileChooser t = new FileChooser();
-        t.setInitialDirectory(workingDirectory);
-        t.setTitle(applicationTemplate.manager.getPropertyValue(LOAD_DIALOG_TITLE.name()));
-        t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()), applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
-        currentFile = t.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+        FileChooser fc = new FileChooser();
+        initializeFileChooser(fc, false);
+        currentFile = fc.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
         if(currentFile != null){
                 try{
                     dataFilePath = currentFile.toPath().toAbsolutePath();
@@ -112,7 +94,7 @@ public final class AppActions implements ActionComponent {
                     Option userSelection = existingData.getSelectedOption();
                     if(userSelection == Option.YES) {
                         ((AppUI)applicationTemplate.getUIComponent()).clear();
-                        ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setText("");
+                        ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
                         ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
                     }
                     else return;
@@ -153,14 +135,10 @@ public final class AppActions implements ActionComponent {
                 LineChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
                 WritableImage image = chart.snapshot(new SnapshotParameters(), null);
                
-                File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
-                FileChooser t = new FileChooser();
-                t.setInitialDirectory(workingDirectory);
-                t.setTitle(applicationTemplate.manager.getPropertyValue(SCREENSHOT_DIALOG_TITLE.name()));
-                t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(IMAGE_FILE_TYPE_NAME.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_FILE_EXT.name())));
-                t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
+                FileChooser fc = new FileChooser();
+                initializeFileChooser(fc, true);
                 
-                File file = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+                File file = fc.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
                 
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), applicationTemplate.manager.getPropertyValue(IMAGE_FILE_TYPE_PARAM.name()), file);
             }
@@ -193,13 +171,10 @@ public final class AppActions implements ActionComponent {
         save.show(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK.name()));
         Option userSelection = save.getSelectedOption();
         if(userSelection == Option.YES){
-            File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
-            FileChooser t = new FileChooser();
-            t.setInitialDirectory(workingDirectory);
-            t.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_UNSAVED_WORK_TITLE.name()));
-            t.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()),applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
-            t.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
-            currentFile = t.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
+            
+            FileChooser fc = new FileChooser();
+            initializeFileChooser(fc, false);
+            currentFile = fc.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
             if(currentFile != null){
                 try{
                     FileWriter writer = new FileWriter(currentFile);
@@ -223,11 +198,24 @@ public final class AppActions implements ActionComponent {
         }
     }
     
-    public File getCurrentFile(){
-        return currentFile;
-    }
     
     public Path getDataPath(){
         return dataFilePath;
     }  
+    
+    private void initializeFileChooser(FileChooser fc, boolean isScreenshot){
+        File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
+        fc.setInitialDirectory(workingDirectory);
+        fc.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
+        if(isScreenshot){
+            fc.setTitle(applicationTemplate.manager.getPropertyValue(SCREENSHOT_DIALOG_TITLE.name()));
+            fc.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(IMAGE_FILE_TYPE_NAME.name()), 
+                    applicationTemplate.manager.getPropertyValue(SCREENSHOT_FILE_EXT.name())));
+        }
+        else{
+            fc.setTitle(applicationTemplate.manager.getPropertyValue(SAVE_DIALOG_TITLE.name()));
+            fc.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()), 
+                    applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
+        }
+    }
 }

@@ -30,7 +30,7 @@ public class AppData implements DataComponent {
     private TSDProcessor        processor;
     private ApplicationTemplate applicationTemplate;
     private ArrayList<String>   dataEntries;
-    private final String        newLine = "\n";
+    private final String        NEW_LINE = "\n";
 
     public AppData(ApplicationTemplate applicationTemplate) {
         this.processor = new TSDProcessor();
@@ -45,13 +45,13 @@ public class AppData implements DataComponent {
             String data = new String(Files.readAllBytes(dataFilePath));
             processor.processString(data);
             
-            int len = data.split(newLine).length;
-            dataEntries = new ArrayList<>(Arrays.asList(data.split(newLine)));
+            int len = data.split(NEW_LINE).length;
+            dataEntries = new ArrayList<>(Arrays.asList(data.split(NEW_LINE)));
             String output = new String();
               
             if(len >10){
                 for(int i =0; i< 10; i++){
-                    output += dataEntries.get(0) + newLine;
+                    output += dataEntries.get(0) + NEW_LINE;
                     dataEntries.remove(0);
                 } 
                 ErrorDialog manyLines = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
@@ -63,7 +63,7 @@ public class AppData implements DataComponent {
             }
             else{
                 for(int i =0; i< len; i++){
-                    output += dataEntries.get(0) + newLine;
+                    output += dataEntries.get(0) + NEW_LINE;
                     dataEntries.remove(0);
                 } 
             }
@@ -71,8 +71,8 @@ public class AppData implements DataComponent {
             
             textbox.textProperty().addListener(e ->{
                 if(textbox.getText().isEmpty() && dataEntries.isEmpty()) return;
-                if(textbox.getText().split(newLine).length < 10 && index.get() < dataEntries.size()){
-                    textbox.appendText(dataEntries.get(index.getAndIncrement())+ newLine);
+                if(textbox.getText().split(NEW_LINE).length < 10 && index.get() < dataEntries.size()){
+                    textbox.appendText(dataEntries.get(index.getAndIncrement())+ NEW_LINE);
                     dataEntries.remove(0);   
                 }
                 index.set(0);
