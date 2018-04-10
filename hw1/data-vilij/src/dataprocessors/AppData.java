@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.scene.control.TextArea;
+import static settings.AppPropertyTypes.DATA_DISPLAY_FAIL_TITLE;
 import static settings.AppPropertyTypes.INPUT;
 import static settings.AppPropertyTypes.INPUT_TITLE;
 import static settings.AppPropertyTypes.LOADED_MANY_LINES_DESC_1;
@@ -95,12 +96,11 @@ public class AppData implements DataComponent {
 
     public void loadData(String dataString) throws Exception {
         try{
-            resetData();
+//            if(dataEntries != null && !dataEntries.isEmpty()) resetData();
             processor.processString(dataString);
         }
         catch(Exception e){
             throw e;
-           
         }
         
        

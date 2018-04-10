@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
 import javafx.scene.chart.LineChart;
 import javafx.scene.text.Text;
 import static settings.AppPropertyTypes.*;
@@ -52,7 +53,8 @@ public final class AppUI extends UITemplate {
     private String                       scrnshoticonPath;
     private LineChart<Number, Number>    chart;               // the chart where data will be displayed
     private Button                       displayButton;  // workspace button to display data on the chart
-    private CheckBox                     tickBox;
+//    private CheckBox                     tickBox;
+    private Button                       toggleButton;
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
@@ -91,15 +93,28 @@ public final class AppUI extends UITemplate {
     @Override
     protected void setToolbarHandlers(ApplicationTemplate applicationTemplate) {
         applicationTemplate.setActionComponent(new AppActions(applicationTemplate));
-        newButton.setOnAction(e -> applicationTemplate.getActionComponent().handleNewRequest());
+        newButton.setOnAction(e -> {
+            vPane.getChildren().remove(toggleButton);
+            vPane.getChildren().remove(fileInfo);
+            vPane.setVisible(false);
+            applicationTemplate.getActionComponent().handleNewRequest();
+            if(!((AppActions)applicationTemplate.getActionComponent()).getFlag()){
+//                toggleButton.setVisible(true);
+            vPane.getChildren().add(toggleButton);
+            vPane.setVisible(true);
+            }
+            
+        });
+        
         saveButton.setOnAction(e -> applicationTemplate.getActionComponent().handleSaveRequest());
         loadButton.setOnAction(e -> {
-            clear();
             vPane.setVisible(false);
+            vPane.getChildren().remove(fileInfo);
             applicationTemplate.getActionComponent().handleLoadRequest();
             
             //Don't continue if data in file is invalid
             if(!((AppActions)applicationTemplate.getActionComponent()).getFlag()){
+                vPane.getChildren().remove(toggleButton);
                 getTextArea().setDisable(true);
                 getSaveButton().setDisable(true);
 
@@ -107,7 +122,7 @@ public final class AppUI extends UITemplate {
                         "\nNumber of labels: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumLabels() +
                         "\nLabel names:\n\t• " + String.join("\n\t• ",((AppData)applicationTemplate.getDataComponent()).getProcessor().getLabels()) +
                         "\nSource: " + dataSource);
-
+                vPane.getChildren().add(fileInfo);
 
                 vPane.setVisible(true);
                 }
@@ -134,6 +149,7 @@ public final class AppUI extends UITemplate {
     public void clear() {
         storedData = "";
         chart.getData().clear();
+        fileInfo.setText("");
     }
 
     private void layout() {
@@ -158,13 +174,14 @@ public final class AppUI extends UITemplate {
         HBox hPane = new HBox();
         hPane.setSpacing(10);
         
-        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
+//        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
 //        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
+        toggleButton = new Button(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
         
-        Region region = new Region();
-        HBox.setHgrow(region, Priority.ALWAYS);
+//        Region region = new Region();
+//        HBox.setHgrow(region, Priority.ALWAYS);
 
-        hPane.getChildren().addAll(displayButton,region);
+        hPane.getChildren().add(toggleButton);
         
         fileInfo = new Text();
         fileInfo.setWrappingWidth(300);
@@ -172,8 +189,8 @@ public final class AppUI extends UITemplate {
         pane.setAlignment(Pos.BOTTOM_CENTER);
         vPane.getChildren().add(boxTitle);
         vPane.getChildren().add(textArea);
-        vPane.getChildren().add(hPane);
-        vPane.getChildren().add(fileInfo);
+//        vPane.getChildren().add(hPane);
+//        vPane.getChildren().add(fileInfo);
         
         // Add algorithm selection
         
@@ -220,25 +237,37 @@ public final class AppUI extends UITemplate {
     }
     
     private void setWorkspaceActions() {
+        newButton.setDisable(false);
+        
         textArea.textProperty().addListener(e -> {
             
-            if(textArea.getText().equals(storedData)) hasNewText = false;
-            else hasNewText = true;
             
             if(!textArea.getText().isEmpty()){
-                newButton.setDisable(false);
+//                newButton.setDisable(false);
                 saveButton.setDisable(false);
             }
             else{
-                newButton.setDisable(true);
+//                newButton.setDisable(true);
                 saveButton.setDisable(true);
             }
-
+            
+            if(textArea.getText().equals(storedData)) {
+                hasNewText = false;
+                saveButton.setDisable(true);
+            }
+            else hasNewText = true;
+            
         });
         
-        displayButton.setOnAction(e -> {
-            try {
+        toggleButton.setOnAction(e -> {
+            textArea.setDisable(!textArea.disableProperty().get());
+            vPane.getChildren().remove(fileInfo);
+            if(textArea.disableProperty().get()){
+                toggleButton.setText(applicationTemplate.manager.getPropertyValue(EDIT_BUTTON_NAME.name()));
+                
+                try {
                     clear();
+                    ((AppData)applicationTemplate.getDataComponent()).clear();
                     String currentText = textArea.getText();
                     ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
                     
@@ -257,22 +286,74 @@ public final class AppUI extends UITemplate {
                     }
                     else storedData = textArea.getText();
                     
-                    
+                    if(dataSource == null) dataSource = "";
                     ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
-                    
+                    fileInfo.setText("Number of instances: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumInstances() +
+                        "\nNumber of labels: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumLabels() +
+                        "\nLabel names:\n\t• " + String.join("\n\t• ",((AppData)applicationTemplate.getDataComponent()).getProcessor().getLabels()) +
+                        "\nSource: " + dataSource);
+                    vPane.getChildren().add(fileInfo);
                     if(hasNewText){
                         ((AppData)applicationTemplate.getDataComponent()).displayData();
+                        
                     }
-               }
-            catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
-                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                }
+                catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
+                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
                     err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), error.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
+                    textArea.setDisable(!textArea.disableProperty().get());
+                    toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
+                }
+                catch(Exception ex) {
+                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+                    err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
+                    textArea.setDisable(!textArea.disableProperty().get());
+                    toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
+                }
             }
-            catch(Exception ex) {
-                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
-           }
+            else{
+                toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
+            }
+            
         });
+//        displayButton.setOnAction(e -> {
+//            try {
+//                    clear();
+//                    String currentText = textArea.getText();
+//                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
+//                    
+//                    ArrayList<String> fileDataEntries = ((AppData)applicationTemplate.getDataComponent()).getFileData();
+//                    
+//                    if(fileDataEntries != null){
+//                        for(String j : fileDataEntries ){
+//                            if(!newDataEntries.contains(j)){
+//                                newDataEntries.add(j);
+//                            }
+//                        }
+//                    }
+//                    
+//                    if(((AppActions)applicationTemplate.getActionComponent()).getDataPath() != null){
+//                        storedData = String.join(NEW_LINE, newDataEntries);
+//                    }
+//                    else storedData = textArea.getText();
+//                    
+//                    
+//                    ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
+//                    
+//                    if(hasNewText){
+//                        ((AppData)applicationTemplate.getDataComponent()).displayData();
+//                    }
+//               }
+//            catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
+//                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+//                    err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), error.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
+//            }
+//            catch(Exception ex) {
+//                ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+//                err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
+//           }
+//        });
+
         // Toggle button for done and edit
 //        tickBox.selectedProperty().addListener( e ->{
 //            if(tickBox.isSelected()){
@@ -284,6 +365,8 @@ public final class AppUI extends UITemplate {
 //            
 //        });
         
+            
+    
         chart.getData().addListener(new ListChangeListener() {
 
             @Override

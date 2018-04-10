@@ -45,11 +45,11 @@ public final class AppActions implements ActionComponent {
 
     @Override
     public void handleNewRequest() {
-        try {
+//        try {
             errorFlag = false;
-            if(dataFilePath == null){
-                promptToSave();
-            }
+//            if(dataFilePath == null){
+//                promptToSave();
+//            }
             if(((AppData)applicationTemplate.getDataComponent()).getFileData() != null){
                 ((AppData)applicationTemplate.getDataComponent()).resetData();  
                 ((AppUI)applicationTemplate.getUIComponent()).clear();
@@ -58,11 +58,12 @@ public final class AppActions implements ActionComponent {
             ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setDisable(false);
             currentFile = null;
             dataFilePath = null;
-        } catch (IOException ex) {
-            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
-            errorFlag = true;
-        }
+            ((AppUI)applicationTemplate.getUIComponent()).setFilePath("");
+//        } catch (IOException ex) {
+//            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+//            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
+//            errorFlag = true;
+//        }
     }
 
     @Override
@@ -110,7 +111,8 @@ public final class AppActions implements ActionComponent {
                     }
                     
                 
-            }
+        }
+        else errorFlag = true;
     }
 
     @Override

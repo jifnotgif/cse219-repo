@@ -16,7 +16,7 @@ public enum AppPropertyTypes {
 
     /* user interface icon file names */
     SCREENSHOT_ICON,
-
+    
     /* tooltips for user interface buttons */
     SCREENSHOT_TOOLTIP,
 
@@ -69,7 +69,10 @@ public enum AppPropertyTypes {
     DEFAULT_FILE_NAME,
     TEXT_AREA,
     SPECIFIED_FILE,
+    
     DISPLAY_NAME,
+    DONE_BUTTON_NAME,
+    EDIT_BUTTON_NAME,
     
     READ_ONLY,
     CHART_TITLE,
