@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import javafx.collections.ListChangeListener;
 import javafx.scene.chart.LineChart;
+import javafx.scene.text.Text;
 import static settings.AppPropertyTypes.*;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
@@ -55,6 +56,9 @@ public final class AppUI extends UITemplate {
     private TextArea                     textArea;       // text area for new data input
     private boolean                      hasNewText;     // whether or not the text area has any new data since last display
     private String                       storedData;
+    private VBox                         vPane;
+    private Text                         fileInfo;
+    private String                       dataSource;
     
     private final String                 NEW_LINE = "\n";
     
@@ -89,7 +93,25 @@ public final class AppUI extends UITemplate {
         applicationTemplate.setActionComponent(new AppActions(applicationTemplate));
         newButton.setOnAction(e -> applicationTemplate.getActionComponent().handleNewRequest());
         saveButton.setOnAction(e -> applicationTemplate.getActionComponent().handleSaveRequest());
-        loadButton.setOnAction(e -> applicationTemplate.getActionComponent().handleLoadRequest());
+        loadButton.setOnAction(e -> {
+            clear();
+            vPane.setVisible(false);
+            applicationTemplate.getActionComponent().handleLoadRequest();
+            
+            //Don't continue if data in file is invalid
+            if(!((AppActions)applicationTemplate.getActionComponent()).getFlag()){
+                getTextArea().setDisable(true);
+                getSaveButton().setDisable(true);
+
+                fileInfo.setText("Number of instances: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumInstances() +
+                        "\nNumber of labels: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumLabels() +
+                        "\nLabel names:\n\t• " + String.join("\n\t• ",((AppData)applicationTemplate.getDataComponent()).getProcessor().getLabels()) +
+                        "\nSource: " + dataSource);
+
+
+                vPane.setVisible(true);
+                }
+            });
         exitButton.setOnAction(e -> applicationTemplate.getActionComponent().handleExitRequest());
         printButton.setOnAction(e -> applicationTemplate.getActionComponent().handlePrintRequest());
         scrnshotButton.setOnAction(e -> {
@@ -122,7 +144,7 @@ public final class AppUI extends UITemplate {
         pane.setPadding(new Insets(10,10,10,10));
         
         
-        VBox vPane = new VBox(10);
+        vPane = new VBox(10);
         vPane.setSpacing(10);
  
         Label boxTitle = new Label(applicationTemplate.manager.getPropertyValue(TEXTBOX_TITLE.name()));
@@ -131,25 +153,31 @@ public final class AppUI extends UITemplate {
         
         textArea = new TextArea();
         textArea.setPrefWidth(300);
-        textArea.setPrefHeight(150);
+        textArea.setPrefHeight(225);
 
         HBox hPane = new HBox();
         hPane.setSpacing(10);
         
         displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
-        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
+//        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
 
-        hPane.getChildren().addAll(displayButton,region, tickBox);
+        hPane.getChildren().addAll(displayButton,region);
         
+        fileInfo = new Text();
+        fileInfo.setWrappingWidth(300);
         
         pane.setAlignment(Pos.BOTTOM_CENTER);
         vPane.getChildren().add(boxTitle);
         vPane.getChildren().add(textArea);
         vPane.getChildren().add(hPane);
+        vPane.getChildren().add(fileInfo);
         
+        // Add algorithm selection
+        
+        vPane.setVisible(false);
         
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
@@ -179,8 +207,16 @@ public final class AppUI extends UITemplate {
         return saveButton;
     }
     
+    public VBox getVBox(){
+        return vPane;
+    }
+    
     public String getStoredData(){
         return storedData;
+    }
+    
+    public void setStoredData(String input){
+        storedData = input;
     }
     
     private void setWorkspaceActions() {
@@ -237,16 +273,16 @@ public final class AppUI extends UITemplate {
                 err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
            }
         });
-        
-        tickBox.selectedProperty().addListener( e ->{
-            if(tickBox.isSelected()){
-                textArea.setDisable(true);
-            }
-            else{
-                textArea.setDisable(false);
-            }
-            
-        });
+        // Toggle button for done and edit
+//        tickBox.selectedProperty().addListener( e ->{
+//            if(tickBox.isSelected()){
+//                textArea.setDisable(true);
+//            }
+//            else{
+//                textArea.setDisable(false);
+//            }
+//            
+//        });
         
         chart.getData().addListener(new ListChangeListener() {
 
@@ -261,5 +297,9 @@ public final class AppUI extends UITemplate {
                 
             }
         });
+    }
+    
+    public void setFilePath(String path){
+        dataSource = path;
     }
 }

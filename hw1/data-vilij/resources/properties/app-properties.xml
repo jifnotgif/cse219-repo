@@ -7,7 +7,7 @@ functionality within the main workspace. -->
         <!-- RESOURCE FILES AND FOLDERS -->
         <property name="DATA_RESOURCE_PATH" value="data"/>
         <property name="CSS_PATH" value="css/chart.css"/>
-        <property name="USER_DIRECTORY" value="user.dir"/>
+        <property name="USER_DIRECTORY" value="data-vilij/resources/data"/>
         <!-- USER INTERFACE ICON FILES -->
         <property name="SCREENSHOT_ICON" value="screenshot.png"/>
 
@@ -72,7 +72,7 @@ functionality within the main workspace. -->
         
         <property name="DISPLAY_NAME" value="Display"/>
         <property name="READ_ONLY" value="read-only data"/>
-        <property name="CHART_TITLE" value="Data Visualization"/>
+        <property name="CHART_TITLE" value="Plot"/>
         
     </property_list>
     <property_options_list/>

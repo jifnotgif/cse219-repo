@@ -33,6 +33,7 @@ public final class TSDProcessor {
 
     private Map<String, String>  dataLabels;
     private Map<String, Point2D> dataPoints;
+    private Set<String>          labels;
     private final String         NEW_LINE = "\n";
     private final String         NAME_SYMBOL ="@";
     private final String         TAB = "\t";
@@ -103,7 +104,7 @@ public final class TSDProcessor {
      */
     void toChartData(XYChart<Number, Number> chart) {
         AtomicInteger counter = new AtomicInteger(0);
-        Set<String> labels = new HashSet<>(dataLabels.values());
+        labels = new HashSet<>(dataLabels.values());
         for (String label : labels) {
             XYChart.Series<Number, Number> series = new XYChart.Series<>();
             series.setName(label);
@@ -153,6 +154,19 @@ public final class TSDProcessor {
         if (!name.startsWith(NAME_SYMBOL))
             throw new InvalidDataNameException(name);
         return name;
+    }
+    
+    public int getNumInstances(){
+        return dataLabels.size();
+    }
+    public int getNumLabels(){
+        labels = new HashSet<>(dataLabels.values());
+        return labels.size();
+    }
+    
+    public Set<String> getLabels(){
+        labels = new HashSet<>(dataLabels.values());
+        return labels;
     }
     
 }

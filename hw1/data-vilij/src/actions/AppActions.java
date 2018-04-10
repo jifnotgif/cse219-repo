@@ -34,34 +34,42 @@ public final class AppActions implements ActionComponent {
     private ApplicationTemplate applicationTemplate;
 
     /** Path to the data file currently active. */
-    Path dataFilePath;
-    File currentFile;
-
+    Path                dataFilePath;
+    File                currentFile;
+    private boolean     errorFlag;   
+    
     public AppActions(ApplicationTemplate applicationTemplate) {
         this.applicationTemplate = applicationTemplate;
+        errorFlag = false;
     }
 
     @Override
     public void handleNewRequest() {
         try {
+            errorFlag = false;
             if(dataFilePath == null){
                 promptToSave();
-            }else{
-                ((AppData)applicationTemplate.getDataComponent()).resetData();  
             }
-            ((AppUI)applicationTemplate.getUIComponent()).clear();
-            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
+            if(((AppData)applicationTemplate.getDataComponent()).getFileData() != null){
+                ((AppData)applicationTemplate.getDataComponent()).resetData();  
+                ((AppUI)applicationTemplate.getUIComponent()).clear();
+                ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
+            }
+            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setDisable(false);
             currentFile = null;
             dataFilePath = null;
         } catch (IOException ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
+            errorFlag = true;
         }
     }
 
     @Override
     public void handleSaveRequest() { 
+        errorFlag = false;        
         if(dataFilePath == null){
+            
             FileChooser fc = new FileChooser();
             initializeFileChooser(fc, false);
             currentFile = fc.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
@@ -77,37 +85,37 @@ public final class AppActions implements ActionComponent {
         }catch (Exception ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
+            errorFlag = true;
         }
             
     }
 
     @Override
-    public void handleLoadRequest() {
+    public void handleLoadRequest(){
+        errorFlag = false;
+        ((AppData)applicationTemplate.getDataComponent()).clear();
         FileChooser fc = new FileChooser();
         initializeFileChooser(fc, false);
         currentFile = fc.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
         if(currentFile != null){
-                try{
-                    dataFilePath = currentFile.toPath().toAbsolutePath();
+                    dataFilePath = currentFile.toPath();
                     ConfirmationDialog existingData = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
                     existingData.show(applicationTemplate.manager.getPropertyValue(CLEAR_INTERFACE_TITLE.name()), applicationTemplate.manager.getPropertyValue(CLEAR_INTERFACE_DESC.name()));
                     Option userSelection = existingData.getSelectedOption();
                     if(userSelection == Option.YES) {
                         ((AppUI)applicationTemplate.getUIComponent()).clear();
                         ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
+                        ((AppUI)applicationTemplate.getUIComponent()).setFilePath(dataFilePath.toString());
                         ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
                     }
-                    else return;
                     
-                }catch (Exception ex) {
-                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), ex.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
-                }
+                
             }
     }
 
     @Override
     public void handleExitRequest() {
+        errorFlag = false;        
         try {
             ConfirmationDialog exitRequest = (ConfirmationDialog)applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
             exitRequest.show(applicationTemplate.manager.getPropertyValue(EXIT_TITLE.name()), applicationTemplate.manager.getPropertyValue(EXIT_WHILE_RUNNING_WARNING.name()));
@@ -120,7 +128,7 @@ public final class AppActions implements ActionComponent {
         } catch (Exception ex) {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(EXIT_APP_ERROR.name()));
-    
+            errorFlag = true;
         }
     }
 
@@ -130,6 +138,7 @@ public final class AppActions implements ActionComponent {
     }
 
     public void handleScreenshotRequest() throws IOException {
+        errorFlag = false;        
         try{
             if(!(((AppData)applicationTemplate.getDataComponent()).getProcessor().isChartEmpty())){
                 LineChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
@@ -147,10 +156,12 @@ public final class AppActions implements ActionComponent {
         catch(IOException e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_FILE_ERROR.name()));
+            errorFlag = true;
         }
         catch(IllegalArgumentException e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SCREENSHOT_OUTPUT_ERROR.name()));
+            errorFlag = true;
         }
     }
 
@@ -186,11 +197,13 @@ public final class AppActions implements ActionComponent {
                     err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(SAVE_FILE_ERROR.name()));
                 }
             }
-            applicationTemplate.getUIComponent().clear();
+            ((AppUI)applicationTemplate.getUIComponent()).clear();
+            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
             return true;
         }
         else if(userSelection == Option.NO){
             ((AppUI)applicationTemplate.getUIComponent()).clear();
+            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
             return true;
         }
         else{
@@ -204,7 +217,8 @@ public final class AppActions implements ActionComponent {
     }  
     
     private void initializeFileChooser(FileChooser fc, boolean isScreenshot){
-        File workingDirectory = new File(System.getProperty(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name())));
+        File dir = new File(applicationTemplate.manager.getPropertyValue(USER_DIRECTORY.name()));
+        File workingDirectory = new File(dir.getAbsolutePath());
         fc.setInitialDirectory(workingDirectory);
         fc.setInitialFileName(applicationTemplate.manager.getPropertyValue(DEFAULT_FILE_NAME.name()));
         if(isScreenshot){
@@ -217,5 +231,13 @@ public final class AppActions implements ActionComponent {
             fc.getExtensionFilters().add(new ExtensionFilter(applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT_DESC.name()), 
                     applicationTemplate.manager.getPropertyValue(DATA_FILE_EXT.name())));
         }
+    }
+    
+    public boolean getFlag(){
+        return errorFlag;
+    }
+    
+    public void setFlag(){
+        errorFlag = !errorFlag;
     }
 }

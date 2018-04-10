@@ -1,5 +1,6 @@
 package dataprocessors;
 
+import actions.AppActions;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import ui.AppUI;
@@ -40,10 +41,12 @@ public class AppData implements DataComponent {
     @Override
     public void loadData(Path dataFilePath) {
         try{
+            if(dataEntries != null && !dataEntries.isEmpty()) resetData();
             AtomicInteger index = new AtomicInteger(0);
             TextArea textbox = ((AppUI)applicationTemplate.getUIComponent()).getTextArea();
             String data = new String(Files.readAllBytes(dataFilePath));
             processor.processString(data);
+            ((AppUI)applicationTemplate.getUIComponent()).setStoredData(data);
             
             int len = data.split(NEW_LINE).length;
             dataEntries = new ArrayList<>(Arrays.asList(data.split(NEW_LINE)));
@@ -70,7 +73,10 @@ public class AppData implements DataComponent {
             textbox.setText(output);
             
             textbox.textProperty().addListener(e ->{
-                if(textbox.getText().isEmpty() && dataEntries.isEmpty()) return;
+                if(textbox.getText().isEmpty()) {
+                    dataEntries.clear();
+                    return;
+                }
                 if(textbox.getText().split(NEW_LINE).length < 10 && index.get() < dataEntries.size()){
                     textbox.appendText(dataEntries.get(index.getAndIncrement())+ NEW_LINE);
                     dataEntries.remove(0);   
@@ -83,12 +89,13 @@ public class AppData implements DataComponent {
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
             err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), 
                     e.getMessage() +applicationTemplate.manager.getPropertyValue(INPUT.name()));
-           
+            ((AppActions)applicationTemplate.getActionComponent()).setFlag();
         }
     }
 
     public void loadData(String dataString) throws Exception {
         try{
+            resetData();
             processor.processString(dataString);
         }
         catch(Exception e){
