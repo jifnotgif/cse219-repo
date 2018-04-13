@@ -50,6 +50,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.util.Callback;
@@ -76,8 +77,7 @@ public final class AppUI extends UITemplate {
     private String scrnshoticonPath;
     private String settingsiconPath;
     private LineChart<Number, Number> chart;               // the chart where data will be displayed
-    private Button displayButton;  // workspace button to display data on the chart
-//    private CheckBox                     tickBox;
+//    private Button displayButton;  // workspace button to display data on the chart
     private Button toggleButton;
     private TextArea textArea;       // text area for new data input
     private boolean hasNewText;     // whether or not the text area has any new data since last display
@@ -100,6 +100,13 @@ public final class AppUI extends UITemplate {
     private Button runAlgorithm;
     private Stage algorithmConfigWindow;
     private ArrayList<Button> configButtons;
+    private ArrayList<ConfigState> cachedSettings;
+    private ConfigState userSettings;
+    private TextField clustersField;
+    private TextField iterationsField;
+    private TextField intervalsField;
+    private CheckBox runOption;
+    
 
     public LineChart<Number, Number> getChart() {
         return chart;
@@ -140,7 +147,7 @@ public final class AppUI extends UITemplate {
             vPane.getChildren().remove(algorithmPane);
             vPane.setVisible(false);
             applicationTemplate.getActionComponent().handleNewRequest();
-            
+
             if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
 //                toggleButton.setVisible(true);
                 toggleButton.setText("Done");
@@ -155,10 +162,10 @@ public final class AppUI extends UITemplate {
         loadButton.setOnAction(e -> {
             vPane.setVisible(false);
             algorithmPane.getChildren().remove(runAlgorithm);
+            runAlgorithm.setVisible(false);
             vPane.getChildren().remove(fileInfo);
             algorithmList.getChildren().clear();
             resetToggleOptions();
-            
             algorithmTable.getChildren().remove(algorithmTypes);
             vPane.getChildren().remove(algorithmPane);
 
@@ -175,10 +182,14 @@ public final class AppUI extends UITemplate {
                 if (!algorithmPane.getChildren().contains(algorithmTable)) {
                     algorithmPane.getChildren().add(algorithmTable);
                 }
-                    
+
+                initializeAlgorithmTypes();
                 algorithmTable.getChildren().add(algorithmTypes);
                 //find a way to prevent auto selecting the last picked option
+                algorithmPane.getChildren().add(runAlgorithm);
+                runAlgorithm.setVisible(true);
                 vPane.getChildren().add(algorithmPane);
+
                 vPane.setVisible(true);
             }
             return;
@@ -229,7 +240,7 @@ public final class AppUI extends UITemplate {
         textArea.setMinHeight(200);
         HBox hPane = new HBox();
         hPane.setSpacing(10);
-
+        hPane.setFillHeight(true);
 //        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
 //        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         toggleButton = new Button(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
@@ -262,43 +273,43 @@ public final class AppUI extends UITemplate {
 
         algorithmGroups = new ArrayList<>();
         configButtons = new ArrayList<>();
+        cachedSettings = new ArrayList<>();
         
         Image settingsImage = new Image(getClass().getResourceAsStream(settingsiconPath));
         // set each radiobutton's toggle group to select only one at a time
         Label classificationTypeTitle = new Label("Classification");
         classificationTypeTitle.setId("algoTitle");
 
-            Button classificationSettings1 = new Button();
-            classificationSettings1.setId("settings-button");
-            classificationSettings1.setGraphic(new ImageView(settingsImage));
-            configButtons.add(classificationSettings1);
+        Button classificationSettings1 = new Button();
+        classificationSettings1.getStyleClass().add("settings-button");
+        classificationSettings1.setId("classification");
+        classificationSettings1.setGraphic(new ImageView(settingsImage));
+        configButtons.add(classificationSettings1);
         HBox classificationOption1 = new HBox();
         RadioButton classificationType1 = new RadioButton("Random Classification");
-        
         //add algo settings
 
         classificationGroup = new ToggleGroup();
         classificationType1.setToggleGroup(classificationGroup);
         classificationOption1.getChildren().add(classificationType1);
         classificationOption1.getChildren().add(classificationSettings1);
-        
-        
+
         algorithmGroups.add(classificationGroup);
 
         classificationTypes.getChildren().addAll(classificationTypeTitle, classificationOption1);
 
         Label clusteringTypeTitle = new Label("Clustering");
         clusteringTypeTitle.setId("algoTitle");
-        
+
         Button clusteringSettings1 = new Button();
-            clusteringSettings1.setId("settings-button");
-            clusteringSettings1.setGraphic(new ImageView(settingsImage));
-            configButtons.add(clusteringSettings1);
+        clusteringSettings1.getStyleClass().add("settings-button");
+        clusteringSettings1.setId("clustering");
+        clusteringSettings1.setGraphic(new ImageView(settingsImage));
+        configButtons.add(clusteringSettings1);
         HBox clusteringOption1 = new HBox();
         RadioButton clusteringType1 = new RadioButton("Random Clustering");
-        
-//add algo settings
 
+//add algo settings
         clusteringGroup = new ToggleGroup();
         clusteringType1.setToggleGroup(clusteringGroup);
         clusteringOption1.getChildren().add(clusteringType1);
@@ -306,13 +317,12 @@ public final class AppUI extends UITemplate {
 
         algorithmGroups.add(clusteringGroup);
         clusteringTypes.getChildren().addAll(clusteringTypeTitle, clusteringOption1);
-        
-                
-        
+
         algorithmPane.getChildren().addAll(algorithmTable, algorithmList);
         vPane.getChildren().add(algorithmPane);
 
         runAlgorithm = new Button("Run");
+        runAlgorithm.setDisable(true);
 
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
@@ -320,7 +330,7 @@ public final class AppUI extends UITemplate {
         chart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         chart.setMaxHeight((2 * appPane.getHeight()) / 3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
-        
+
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(chart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
@@ -388,6 +398,7 @@ public final class AppUI extends UITemplate {
                 vPane.getChildren().add(fileInfo);
                 initializeAlgorithmTypes();
                 algorithmTable.getChildren().add(algorithmTypes);
+                algorithmPane.getChildren().add(runAlgorithm);
                 vPane.getChildren().add(algorithmPane);
 //                algorithmTable.getChildren().add(algorithmTypes);
 
@@ -396,6 +407,7 @@ public final class AppUI extends UITemplate {
                     algorithmPane.getChildren().add(algorithmTable);
                 }
                 algorithmPane.getChildren().remove(runAlgorithm);
+                runAlgorithm.setDisable(true);
                 algorithmList.getChildren().clear();
                 resetToggleOptions();
                 toggleOff();
@@ -453,52 +465,118 @@ public final class AppUI extends UITemplate {
             }
         });
         
-        for(Object b : configButtons){
-            ((Button) b).setOnAction(handler ->{
-            algorithmConfigWindow = new Stage();
-            algorithmConfigWindow.initModality(Modality.APPLICATION_MODAL);
-            algorithmConfigWindow.setTitle("Algorithm Configuration");
-            VBox mainPane = new VBox(20);
-            mainPane.setPadding(new Insets(10));
-            Label paneTitle = new Label("Algorithm Run Configuration");
-            GridPane content = new GridPane();
-            content.setHgap(20);
-            content.setVgap(50);
-            content.setPadding(new Insets(10));
-            Label iterationsTitle = new Label("Max. Iterations: ");
-            content.add(iterationsTitle, 0, 0);
-            Label intervalsTitle = new Label("Update Interval: ");
-            content.add(intervalsTitle, 0, 1);
-            Label runTitle = new Label("Continuous Run? ");
-            content.add(runTitle, 0, 2);
-            
-            TextField iterationsField = new TextField();
-            iterationsField.setPrefWidth(65);
-            iterationsField.setPromptText("1000");
-            iterationsField.setFocusTraversable(false); 
+        for (Object b : configButtons) {
+            ((Button) b).setOnAction(handler -> {
+                algorithmConfigWindow = new Stage();
+                algorithmConfigWindow.initModality(Modality.APPLICATION_MODAL);
+                algorithmConfigWindow.setTitle("Algorithm Configuration");
+                VBox mainPane = new VBox(20);
+                mainPane.setPadding(new Insets(10));
+                Label paneTitle = new Label("Algorithm Run Configuration");
+                GridPane content = new GridPane();
+                content.setHgap(20);
+                content.setVgap(50);
+                content.setPadding(new Insets(10));
+                Label iterationsTitle = new Label("Max. Iterations: ");
+                content.add(iterationsTitle, 0, 0);
+                Label intervalsTitle = new Label("Update Interval: ");
+                content.add(intervalsTitle, 0, 1);
 
-            
-            content.add(iterationsField, 1, 0);
-            TextField intervalsField = new TextField();
-            intervalsField.setPrefWidth(65);
-            intervalsField.setPromptText("5");
-            intervalsField.setFocusTraversable(false);
-            content.add(intervalsField, 1, 1);
-            CheckBox runOption = new CheckBox();
-            content.add(runOption, 1, 2);
-            
-            
-            mainPane.getChildren().addAll(paneTitle, content);
-            
-            Scene subscene = new Scene(mainPane);
-            algorithmConfigWindow.setScene(subscene);
-            algorithmConfigWindow.showAndWait();
+                if (((Button) b).getId() != null && ((Button) b).getId().equals("clustering")) {
+
+                    Label numClustersTitle = new Label("Number of labels: ");
+                    content.add(numClustersTitle, 0, 2);
+
+                    clustersField = new TextField();
+                    clustersField.setPrefWidth(65);
+                    clustersField.setPromptText("1");
+                    clustersField.setFocusTraversable(false);
+                    content.add(clustersField, 1, 2);
+                    if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
+                        clustersField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getLabels());
+                    }
+                }
+
+                Label runTitle = new Label("Continuous Run? ");
+                content.add(runTitle, 0, 3);
+
+                iterationsField = new TextField();
+                iterationsField.setPrefWidth(65);
+                iterationsField.setPromptText("1000");
+                iterationsField.setFocusTraversable(false);
+                content.add(iterationsField, 1, 0);
+                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
+                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIterations());
+                }
+                intervalsField = new TextField();
+                intervalsField.setPrefWidth(65);
+                intervalsField.setPromptText("5");
+                intervalsField.setFocusTraversable(false);
+                content.add(intervalsField, 1, 1);
+
+                runOption = new CheckBox();
+                content.add(runOption, 1, 3);
+
+                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
+                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIterations());
+                    intervalsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIntervals());
+                    runOption.setSelected(cachedSettings.get(configButtons.indexOf(((Button)b))).isContinuousState());
+                }
+
+                ConfigState currentSettings = new ConfigState();
+                currentSettings.setBtn((Button) b);
+                mainPane.getChildren().addAll(paneTitle, content);
+
+                Scene subscene = new Scene(mainPane);
+                algorithmConfigWindow.setScene(subscene);
+                algorithmConfigWindow.showAndWait();
+                //Saving the user's configuration settings
+                Integer clusters;
+                Integer intervals;
+                Integer iterations;
+
+                if (clustersField == null) {
+                    clusters = 0;
+                } else if (clustersField.textProperty().get().equals("") || Integer.parseInt(clustersField.textProperty().get()) <= 0) {
+                    clusters = 1;
+                } else {
+                    clusters = Integer.parseInt(clustersField.textProperty().get());
+                }
+                if (intervalsField.textProperty().get().equals("") || Integer.parseInt(intervalsField.textProperty().get()) <= 0) {
+                    intervals = 5;
+                } else {
+                    intervals = Integer.parseInt(intervalsField.textProperty().get());
+                }
+                if (iterationsField.textProperty().get().equals("") || Integer.parseInt(iterationsField.textProperty().get()) <= 0) {
+                    iterations = 1000;
+                } else {
+                    iterations = Integer.parseInt(iterationsField.textProperty().get());
+                }
+
+                boolean continuousState = runOption.isSelected();
+                currentSettings.setIntervals(intervals);
+                currentSettings.setIterations(iterations);
+                currentSettings.setLabels(clusters);
+                currentSettings.setContinuousState(continuousState);
+                if(cachedSettings.size() < configButtons.size()){
+                    for(int i = 0; i< configButtons.size(); i++){
+                        cachedSettings.add(null);
+                    }
+                }
+                cachedSettings.set(configButtons.indexOf((Button)b),currentSettings);
             });
         }
-        
+
         for (Object group : getToggleGroups()) {
             ((ToggleGroup) group).selectedToggleProperty().addListener(listener -> {
-                if(((ToggleGroup) group).selectedToggleProperty().getValue() != null) algorithmPane.getChildren().add(runAlgorithm);
+                if (((ToggleGroup) group).selectedToggleProperty().getValue() != null) {
+                    runAlgorithm.setDisable(false);
+                }
+            });
+        }
+        while (algorithmConfigWindow != null) {
+            algorithmConfigWindow.setOnCloseRequest(value -> {
+
             });
         }
 
@@ -601,7 +679,9 @@ public final class AppUI extends UITemplate {
         });
 
         algorithmTypes.getSelectionModel().selectedItemProperty().addListener(listener -> {
-            if(algorithmTypes.getSelectionModel().getSelectedItem() == null) return;
+            if (algorithmTypes.getSelectionModel().getSelectedItem() == null) {
+                return;
+            }
             if (algorithmTypes.getSelectionModel().getSelectedItem().equals("Classification")) {
                 algorithmList.getChildren().add(classificationTypes);
             }
