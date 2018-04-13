@@ -36,3 +36,27 @@
 .axis-minor-tick-mark {
     -fx-stroke: grey;
 }
+
+#listheading{
+     -fx-background-color: black;
+     -fx-padding: 5 10 5 5;
+     -fx-text-fill: white;
+     -fx-font-weight: bold;
+}
+
+#algoTitle{
+    -fx-font-color: green;
+}
+
+#settings-button{
+    /*-fx-border-color: transparent;*/
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+}
+#settings-button:focused{
+    
+    -fx-border-color: transparent;
+    -fx-border-width: 0.1, 0.1;
+    -fx-border-radius: 0, 0;
+}

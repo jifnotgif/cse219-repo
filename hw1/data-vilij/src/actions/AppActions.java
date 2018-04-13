@@ -46,19 +46,19 @@ public final class AppActions implements ActionComponent {
     @Override
     public void handleNewRequest() {
 //        try {
-            errorFlag = false;
+        errorFlag = false;
 //            if(dataFilePath == null){
 //                promptToSave();
 //            }
-            if(((AppData)applicationTemplate.getDataComponent()).getFileData() != null){
-                ((AppData)applicationTemplate.getDataComponent()).resetData();  
-                ((AppUI)applicationTemplate.getUIComponent()).clear();
-                ((AppUI)applicationTemplate.getUIComponent()).getTextArea().clear();
-            }
-            ((AppUI)applicationTemplate.getUIComponent()).getTextArea().setDisable(false);
-            currentFile = null;
-            dataFilePath = null;
-            ((AppUI)applicationTemplate.getUIComponent()).setFilePath("");
+        if (((AppData) applicationTemplate.getDataComponent()).getFileData() != null) {
+            ((AppData) applicationTemplate.getDataComponent()).resetData();
+        }
+        ((AppUI) applicationTemplate.getUIComponent()).clear();
+        ((AppUI) applicationTemplate.getUIComponent()).getTextArea().clear();
+        ((AppUI) applicationTemplate.getUIComponent()).getTextArea().setDisable(false);
+        currentFile = null;
+        dataFilePath = null;
+        ((AppUI) applicationTemplate.getUIComponent()).setFilePath("");
 //        } catch (IOException ex) {
 //            ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
 //            err.show(applicationTemplate.manager.getPropertyValue(DEFAULT_ERROR_TITLE.name()), applicationTemplate.manager.getPropertyValue(NEW_FILE_ERROR.name()));
@@ -75,6 +75,7 @@ public final class AppActions implements ActionComponent {
             initializeFileChooser(fc, false);
             currentFile = fc.showSaveDialog(applicationTemplate.getUIComponent().getPrimaryWindow());
             if(currentFile == null){
+                errorFlag = true;
                 return;
             }
         }
@@ -109,10 +110,13 @@ public final class AppActions implements ActionComponent {
                         ((AppUI)applicationTemplate.getUIComponent()).setFilePath(dataFilePath.toString());
                         ((AppData)applicationTemplate.getDataComponent()).loadData(dataFilePath);
                     }
-                    
-                
+                    else{
+                        errorFlag = true;
+                    }
         }
-        else errorFlag = true;
+        else {
+            errorFlag = true;
+        }
     }
 
     @Override

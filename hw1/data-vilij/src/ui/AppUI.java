@@ -29,15 +29,36 @@ import static java.io.File.separator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.util.Callback;
 import static settings.AppPropertyTypes.*;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
 import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
+
 /**
  * This is the application's user interface implementation.
  *
@@ -45,41 +66,59 @@ import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
  */
 public final class AppUI extends UITemplate {
 
-    /** The application to which this class of actions belongs. */
+    /**
+     * The application to which this class of actions belongs.
+     */
     ApplicationTemplate applicationTemplate;
-    
+
     @SuppressWarnings("FieldCanBeLocal")
-    private Button                       scrnshotButton; // toolbar button to take a screenshot of the data
-    private String                       scrnshoticonPath;
-    private LineChart<Number, Number>    chart;               // the chart where data will be displayed
-    private Button                       displayButton;  // workspace button to display data on the chart
+    private Button scrnshotButton; // toolbar button to take a screenshot of the data
+    private String scrnshoticonPath;
+    private String settingsiconPath;
+    private LineChart<Number, Number> chart;               // the chart where data will be displayed
+    private Button displayButton;  // workspace button to display data on the chart
 //    private CheckBox                     tickBox;
-    private Button                       toggleButton;
-    private TextArea                     textArea;       // text area for new data input
-    private boolean                      hasNewText;     // whether or not the text area has any new data since last display
-    private String                       storedData;
-    private VBox                         vPane;
-    private Text                         fileInfo;
-    private String                       dataSource;
-    
-    private final String                 NEW_LINE = "\n";
-    
-    public LineChart<Number, Number> getChart() { return chart; }
-    
+    private Button toggleButton;
+    private TextArea textArea;       // text area for new data input
+    private boolean hasNewText;     // whether or not the text area has any new data since last display
+    private String storedData;
+    private VBox vPane;
+    private VBox classificationTypes;
+    private VBox clusteringTypes;
+    private Text fileInfo;
+    private String dataSource;
+    private int numLabels;
+    private Set<String> labels;
+    private final String NEW_LINE = "\n";
+    private VBox algorithmList;
+    private VBox algorithmPane;
+    private VBox algorithmTable;
+    private ComboBox algorithmTypes;
+    private ToggleGroup classificationGroup;
+    private ToggleGroup clusteringGroup;
+    private ArrayList<ToggleGroup> algorithmGroups;
+    private Button runAlgorithm;
+    private Stage algorithmConfigWindow;
+    private ArrayList<Button> configButtons;
+
+    public LineChart<Number, Number> getChart() {
+        return chart;
+    }
+
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
         this.applicationTemplate = applicationTemplate;
     }
-    
+
     @Override
     protected void setResourcePaths(ApplicationTemplate applicationTemplate) {
         super.setResourcePaths(applicationTemplate);
         PropertyManager manager = applicationTemplate.manager;
         String iconsPath = "/" + String.join(separator,
-                            manager.getPropertyValue(GUI_RESOURCE_PATH.name()),
-                            manager.getPropertyValue(ICONS_RESOURCE_PATH.name()));
+                manager.getPropertyValue(GUI_RESOURCE_PATH.name()),
+                manager.getPropertyValue(ICONS_RESOURCE_PATH.name()));
         scrnshoticonPath = String.join(separator, iconsPath, manager.getPropertyValue(SCREENSHOT_ICON.name()));
-        
+        settingsiconPath = String.join(separator, iconsPath, manager.getPropertyValue(SETTINGS_ICON.name()));
     }
 
     @Override
@@ -96,42 +135,60 @@ public final class AppUI extends UITemplate {
         newButton.setOnAction(e -> {
             vPane.getChildren().remove(toggleButton);
             vPane.getChildren().remove(fileInfo);
+
+            algorithmTable.getChildren().remove(algorithmTypes);
+            vPane.getChildren().remove(algorithmPane);
             vPane.setVisible(false);
             applicationTemplate.getActionComponent().handleNewRequest();
-            if(!((AppActions)applicationTemplate.getActionComponent()).getFlag()){
-//                toggleButton.setVisible(true);
-            vPane.getChildren().add(toggleButton);
-            vPane.setVisible(true);
-            }
             
+            if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
+//                toggleButton.setVisible(true);
+                toggleButton.setText("Done");
+
+                vPane.getChildren().add(toggleButton);
+                vPane.setVisible(true);
+            }
+
         });
-        
+
         saveButton.setOnAction(e -> applicationTemplate.getActionComponent().handleSaveRequest());
         loadButton.setOnAction(e -> {
             vPane.setVisible(false);
+            algorithmPane.getChildren().remove(runAlgorithm);
             vPane.getChildren().remove(fileInfo);
-            applicationTemplate.getActionComponent().handleLoadRequest();
+            algorithmList.getChildren().clear();
+            resetToggleOptions();
             
+            algorithmTable.getChildren().remove(algorithmTypes);
+            vPane.getChildren().remove(algorithmPane);
+
+            applicationTemplate.getActionComponent().handleLoadRequest();
+
             //Don't continue if data in file is invalid
-            if(!((AppActions)applicationTemplate.getActionComponent()).getFlag()){
+            if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
                 vPane.getChildren().remove(toggleButton);
                 getTextArea().setDisable(true);
                 getSaveButton().setDisable(true);
 
-                fileInfo.setText("Number of instances: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumInstances() +
-                        "\nNumber of labels: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumLabels() +
-                        "\nLabel names:\n\t• " + String.join("\n\t• ",((AppData)applicationTemplate.getDataComponent()).getProcessor().getLabels()) +
-                        "\nSource: " + dataSource);
+                setFileMetaData();
                 vPane.getChildren().add(fileInfo);
-
-                vPane.setVisible(true);
+                if (!algorithmPane.getChildren().contains(algorithmTable)) {
+                    algorithmPane.getChildren().add(algorithmTable);
                 }
-            });
+                    
+                algorithmTable.getChildren().add(algorithmTypes);
+                //find a way to prevent auto selecting the last picked option
+                vPane.getChildren().add(algorithmPane);
+                vPane.setVisible(true);
+            }
+            return;
+        });
+
         exitButton.setOnAction(e -> applicationTemplate.getActionComponent().handleExitRequest());
         printButton.setOnAction(e -> applicationTemplate.getActionComponent().handlePrintRequest());
         scrnshotButton.setOnAction(e -> {
             try {
-                ((AppActions)applicationTemplate.getActionComponent()).handleScreenshotRequest();
+                ((AppActions) applicationTemplate.getActionComponent()).handleScreenshotRequest();
             } catch (IOException ex) {
                 System.out.println(ex.getMessage());
             }
@@ -142,7 +199,7 @@ public final class AppUI extends UITemplate {
     public void initialize() {
         layout();
         setWorkspaceActions();
-        
+
     }
 
     @Override
@@ -150,57 +207,118 @@ public final class AppUI extends UITemplate {
         storedData = "";
         chart.getData().clear();
         fileInfo.setText("");
+        numLabels = 0;
+
     }
 
     private void layout() {
         GridPane pane = new GridPane();
-        
 
         pane.prefWidthProperty().bind(appPane.widthProperty());
-        pane.setPadding(new Insets(10,10,10,10));
-        
-        
+        pane.setPadding(new Insets(10, 10, 10, 10));
+
         vPane = new VBox(10);
         vPane.setSpacing(10);
- 
+
         Label boxTitle = new Label(applicationTemplate.manager.getPropertyValue(TEXTBOX_TITLE.name()));
         boxTitle.setFont(Font.font(applicationTemplate.manager.getPropertyValue(FONT.name()), 18));
-        
-        
+
         textArea = new TextArea();
         textArea.setPrefWidth(300);
-        textArea.setPrefHeight(225);
-
+//        textArea.setPrefHeight(225);
+        textArea.setMinHeight(200);
         HBox hPane = new HBox();
         hPane.setSpacing(10);
-        
+
 //        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
 //        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         toggleButton = new Button(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
-        
+
 //        Region region = new Region();
 //        HBox.setHgrow(region, Priority.ALWAYS);
-
         hPane.getChildren().add(toggleButton);
-        
+
         fileInfo = new Text();
         fileInfo.setWrappingWidth(300);
-        
+
+        algorithmPane = new VBox(10);
+        algorithmTable = new VBox(10);
+
+        Label listHeader = new Label("Algorithm Types");
+        listHeader.setId("listheading");
+
+        initializeAlgorithmTypes();
+        algorithmTable.getChildren().addAll(listHeader, algorithmTypes);
+
         pane.setAlignment(Pos.BOTTOM_CENTER);
-        vPane.getChildren().add(boxTitle);
-        vPane.getChildren().add(textArea);
-//        vPane.getChildren().add(hPane);
-//        vPane.getChildren().add(fileInfo);
-        
-        // Add algorithm selection
-        
+        vPane.getChildren().addAll(boxTitle, textArea);
+
         vPane.setVisible(false);
+
+        algorithmList = new VBox(10);
+
+        classificationTypes = new VBox(10);
+        clusteringTypes = new VBox(10);
+
+        algorithmGroups = new ArrayList<>();
+        configButtons = new ArrayList<>();
         
+        Image settingsImage = new Image(getClass().getResourceAsStream(settingsiconPath));
+        // set each radiobutton's toggle group to select only one at a time
+        Label classificationTypeTitle = new Label("Classification");
+        classificationTypeTitle.setId("algoTitle");
+
+            Button classificationSettings1 = new Button();
+            classificationSettings1.setId("settings-button");
+            classificationSettings1.setGraphic(new ImageView(settingsImage));
+            configButtons.add(classificationSettings1);
+        HBox classificationOption1 = new HBox();
+        RadioButton classificationType1 = new RadioButton("Random Classification");
+        
+        //add algo settings
+
+        classificationGroup = new ToggleGroup();
+        classificationType1.setToggleGroup(classificationGroup);
+        classificationOption1.getChildren().add(classificationType1);
+        classificationOption1.getChildren().add(classificationSettings1);
+        
+        
+        algorithmGroups.add(classificationGroup);
+
+        classificationTypes.getChildren().addAll(classificationTypeTitle, classificationOption1);
+
+        Label clusteringTypeTitle = new Label("Clustering");
+        clusteringTypeTitle.setId("algoTitle");
+        
+        Button clusteringSettings1 = new Button();
+            clusteringSettings1.setId("settings-button");
+            clusteringSettings1.setGraphic(new ImageView(settingsImage));
+            configButtons.add(clusteringSettings1);
+        HBox clusteringOption1 = new HBox();
+        RadioButton clusteringType1 = new RadioButton("Random Clustering");
+        
+//add algo settings
+
+        clusteringGroup = new ToggleGroup();
+        clusteringType1.setToggleGroup(clusteringGroup);
+        clusteringOption1.getChildren().add(clusteringType1);
+        clusteringOption1.getChildren().add(clusteringSettings1);
+
+        algorithmGroups.add(clusteringGroup);
+        clusteringTypes.getChildren().addAll(clusteringTypeTitle, clusteringOption1);
+        
+                
+        
+        algorithmPane.getChildren().addAll(algorithmTable, algorithmList);
+        vPane.getChildren().add(algorithmPane);
+
+        runAlgorithm = new Button("Run");
+
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis();
         chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
-        chart.setMaxHeight((2*appPane.getHeight())/3);
+        chart.setMaxHeight((2 * appPane.getHeight()) / 3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
         
         final RowConstraints row = new RowConstraints();
@@ -210,111 +328,80 @@ public final class AppUI extends UITemplate {
         chartColumn.setHgrow(Priority.ALWAYS);
         pane.getRowConstraints().add(row);
         pane.getColumnConstraints().addAll(textColumn, chartColumn);
-        
+
         pane.add(vPane, 0, 0);
         pane.add(chart, 1, 0);
+
         appPane.getChildren().add(pane);
     }
-    
-    public TextArea getTextArea(){
+
+    public TextArea getTextArea() {
         return textArea;
     }
-    
-    public Button getSaveButton(){
+
+    public Button getSaveButton() {
         return saveButton;
     }
-    
-    public VBox getVBox(){
+
+    public VBox getVBox() {
         return vPane;
     }
-    
-    public String getStoredData(){
+
+    public String getStoredData() {
         return storedData;
     }
-    
-    public void setStoredData(String input){
+
+    public void setStoredData(String input) {
         storedData = input;
     }
-    
+
     private void setWorkspaceActions() {
         newButton.setDisable(false);
-        
+
         textArea.textProperty().addListener(e -> {
-            
-            
-            if(!textArea.getText().isEmpty()){
+
+            if (!textArea.getText().isEmpty()) {
 //                newButton.setDisable(false);
                 saveButton.setDisable(false);
-            }
-            else{
+            } else {
 //                newButton.setDisable(true);
                 saveButton.setDisable(true);
             }
-            
-            if(textArea.getText().equals(storedData)) {
+
+            if (textArea.getText().equals(storedData)) {
                 hasNewText = false;
                 saveButton.setDisable(true);
+            } else {
+                hasNewText = true;
             }
-            else hasNewText = true;
-            
+
         });
-        
+
         toggleButton.setOnAction(e -> {
             textArea.setDisable(!textArea.disableProperty().get());
             vPane.getChildren().remove(fileInfo);
-            if(textArea.disableProperty().get()){
+            if (textArea.disableProperty().get()) {
                 toggleButton.setText(applicationTemplate.manager.getPropertyValue(EDIT_BUTTON_NAME.name()));
-                
-                try {
-                    clear();
-                    ((AppData)applicationTemplate.getDataComponent()).clear();
-                    String currentText = textArea.getText();
-                    ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
-                    
-                    ArrayList<String> fileDataEntries = ((AppData)applicationTemplate.getDataComponent()).getFileData();
-                    
-                    if(fileDataEntries != null){
-                        for(String j : fileDataEntries ){
-                            if(!newDataEntries.contains(j)){
-                                newDataEntries.add(j);
-                            }
-                        }
-                    }
-                    
-                    if(((AppActions)applicationTemplate.getActionComponent()).getDataPath() != null){
-                        storedData = String.join(NEW_LINE, newDataEntries);
-                    }
-                    else storedData = textArea.getText();
-                    
-                    if(dataSource == null) dataSource = "";
-                    ((AppData)applicationTemplate.getDataComponent()).loadData(storedData);
-                    fileInfo.setText("Number of instances: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumInstances() +
-                        "\nNumber of labels: " + ((AppData)applicationTemplate.getDataComponent()).getProcessor().getNumLabels() +
-                        "\nLabel names:\n\t• " + String.join("\n\t• ",((AppData)applicationTemplate.getDataComponent()).getProcessor().getLabels()) +
-                        "\nSource: " + dataSource);
-                    vPane.getChildren().add(fileInfo);
-                    if(hasNewText){
-                        ((AppData)applicationTemplate.getDataComponent()).displayData();
-                        
-                    }
+                if (!processData()) {
+                    return;
                 }
-                catch(InvalidDataNameException | ArrayIndexOutOfBoundsException error){
-                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), error.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
-                    textArea.setDisable(!textArea.disableProperty().get());
-                    toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
+                vPane.getChildren().add(fileInfo);
+                initializeAlgorithmTypes();
+                algorithmTable.getChildren().add(algorithmTypes);
+                vPane.getChildren().add(algorithmPane);
+//                algorithmTable.getChildren().add(algorithmTypes);
+
+            } else {
+                if (!algorithmPane.getChildren().contains(algorithmTable)) {
+                    algorithmPane.getChildren().add(algorithmTable);
                 }
-                catch(Exception ex) {
-                    ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);
-                    err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
-                    textArea.setDisable(!textArea.disableProperty().get());
-                    toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
-                }
+                algorithmPane.getChildren().remove(runAlgorithm);
+                algorithmList.getChildren().clear();
+                resetToggleOptions();
+                toggleOff();
+
             }
-            else{
-                toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
-            }
-            
+
         });
 //        displayButton.setOnAction(e -> {
 //            try {
@@ -353,36 +440,197 @@ public final class AppUI extends UITemplate {
 //                err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
 //           }
 //        });
-
-        // Toggle button for done and edit
-//        tickBox.selectedProperty().addListener( e ->{
-//            if(tickBox.isSelected()){
-//                textArea.setDisable(true);
-//            }
-//            else{
-//                textArea.setDisable(false);
-//            }
-//            
-//        });
-        
-            
-    
         chart.getData().addListener(new ListChangeListener() {
 
             @Override
             public void onChanged(ListChangeListener.Change c) {
-                if(!chart.getData().isEmpty()){
+                if (!chart.getData().isEmpty()) {
                     scrnshotButton.setDisable(false);
-                }
-                else{
+                } else {
                     scrnshotButton.setDisable(true);
-                }  
-                
+                }
+
             }
         });
+        
+        for(Object b : configButtons){
+            ((Button) b).setOnAction(handler ->{
+            algorithmConfigWindow = new Stage();
+            algorithmConfigWindow.initModality(Modality.APPLICATION_MODAL);
+            algorithmConfigWindow.setTitle("Algorithm Configuration");
+            VBox mainPane = new VBox(20);
+            mainPane.setPadding(new Insets(10));
+            Label paneTitle = new Label("Algorithm Run Configuration");
+            GridPane content = new GridPane();
+            content.setHgap(20);
+            content.setVgap(50);
+            content.setPadding(new Insets(10));
+            Label iterationsTitle = new Label("Max. Iterations: ");
+            content.add(iterationsTitle, 0, 0);
+            Label intervalsTitle = new Label("Update Interval: ");
+            content.add(intervalsTitle, 0, 1);
+            Label runTitle = new Label("Continuous Run? ");
+            content.add(runTitle, 0, 2);
+            
+            TextField iterationsField = new TextField();
+            iterationsField.setPrefWidth(65);
+            iterationsField.setPromptText("1000");
+            iterationsField.setFocusTraversable(false); 
+
+            
+            content.add(iterationsField, 1, 0);
+            TextField intervalsField = new TextField();
+            intervalsField.setPrefWidth(65);
+            intervalsField.setPromptText("5");
+            intervalsField.setFocusTraversable(false);
+            content.add(intervalsField, 1, 1);
+            CheckBox runOption = new CheckBox();
+            content.add(runOption, 1, 2);
+            
+            
+            mainPane.getChildren().addAll(paneTitle, content);
+            
+            Scene subscene = new Scene(mainPane);
+            algorithmConfigWindow.setScene(subscene);
+            algorithmConfigWindow.showAndWait();
+            });
+        }
+        
+        for (Object group : getToggleGroups()) {
+            ((ToggleGroup) group).selectedToggleProperty().addListener(listener -> {
+                if(((ToggleGroup) group).selectedToggleProperty().getValue() != null) algorithmPane.getChildren().add(runAlgorithm);
+            });
+        }
+
     }
-    
-    public void setFilePath(String path){
+
+    public void setFilePath(String path) {
         dataSource = path;
+    }
+
+    public void setFileMetaData() {
+        numLabels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumLabels();
+        labels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getLabels();
+        fileInfo.setText("Number of instances: " + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances()
+                + "\nNumber of labels: " + numLabels
+                + "\nLabel names:\n\t• " + String.join("\n\t• ", labels)
+                + "\nSource: " + dataSource);
+    }
+
+    public boolean processData() {
+        try {
+            clear();
+            ((AppData) applicationTemplate.getDataComponent()).clear();
+            String currentText = textArea.getText();
+            ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
+
+            ArrayList<String> fileDataEntries = ((AppData) applicationTemplate.getDataComponent()).getFileData();
+
+            if (fileDataEntries != null) {
+                for (String j : fileDataEntries) {
+                    if (!newDataEntries.contains(j)) {
+                        newDataEntries.add(j);
+                    }
+                }
+            }
+
+            if (((AppActions) applicationTemplate.getActionComponent()).getDataPath() != null) {
+                storedData = String.join(NEW_LINE, newDataEntries);
+            } else {
+                storedData = textArea.getText();
+            }
+
+            if (dataSource == null) {
+                dataSource = "";
+            }
+            ((AppData) applicationTemplate.getDataComponent()).loadData(storedData);
+
+            setFileMetaData();
+            if (hasNewText) {
+                ((AppData) applicationTemplate.getDataComponent()).displayData();
+
+            }
+            return true;
+        } catch (InvalidDataNameException | ArrayIndexOutOfBoundsException error) {
+            ErrorDialog err = (ErrorDialog) applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show(applicationTemplate.manager.getPropertyValue(INPUT_TITLE.name()), error.getMessage() + applicationTemplate.manager.getPropertyValue(INPUT.name()));
+            textArea.setDisable(!textArea.disableProperty().get());
+            toggleOff();
+            return false;
+        } catch (Exception ex) {
+            ErrorDialog err = (ErrorDialog) applicationTemplate.getDialog(Dialog.DialogType.ERROR);
+            err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
+//                    textArea.setDisable(!textArea.disableProperty().get());
+            toggleOff();
+            return false;
+        }
+    }
+
+    private void initializeAlgorithmTypes() {
+        algorithmTypes = new ComboBox();
+        algorithmTypes.getItems().addAll("Classification", "Clustering");
+
+        algorithmTypes.setCellFactory(l -> {
+            ListCell<String> cell = new ListCell<String>() {
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item != null) {
+                        setText(item);
+
+                        if (item.equals("Classification")) {
+                            SimpleIntegerProperty labels = new SimpleIntegerProperty(numLabels);
+                            disableProperty().bind(new BooleanBinding() {
+                                {
+                                    bind(labels);
+                                }
+
+                                @Override
+                                protected boolean computeValue() {
+                                    return labels.get() != 2;
+                                }
+                            });
+                        }
+                    } else {
+                        setText(null);
+                    }
+                }
+            };
+
+            return cell;
+        });
+
+        algorithmTypes.getSelectionModel().selectedItemProperty().addListener(listener -> {
+            if(algorithmTypes.getSelectionModel().getSelectedItem() == null) return;
+            if (algorithmTypes.getSelectionModel().getSelectedItem().equals("Classification")) {
+                algorithmList.getChildren().add(classificationTypes);
+            }
+            if (algorithmTypes.getSelectionModel().getSelectedItem().equals("Clustering")) {
+                algorithmList.getChildren().add(clusteringTypes);
+            }
+        });
+
+        algorithmTypes.setOnAction(listener -> {
+            algorithmPane.getChildren().remove(algorithmTable);
+        });
+
+    }
+
+    private void toggleOff() {
+        toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
+        algorithmTable.getChildren().remove(algorithmTypes);
+
+//        if(algorithmTypes != null) algorithmTypes.getSelectionModel().clearSelection();
+        vPane.getChildren().remove(algorithmPane);
+    }
+
+    private void resetToggleOptions() {
+        for (Object group : getToggleGroups()) {
+            ((ToggleGroup) group).selectToggle(null);
+        }
+    }
+
+    private ArrayList<ToggleGroup> getToggleGroups() {
+        return algorithmGroups;
     }
 }

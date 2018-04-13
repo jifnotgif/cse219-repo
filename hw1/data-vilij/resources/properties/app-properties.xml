@@ -10,7 +10,7 @@ functionality within the main workspace. -->
         <property name="USER_DIRECTORY" value="data-vilij/resources/data"/>
         <!-- USER INTERFACE ICON FILES -->
         <property name="SCREENSHOT_ICON" value="screenshot.png"/>
-
+        <property name="SETTINGS_ICON" value="settings.png"/>
         <!-- TOOLTIPS FOR BUTTONS -->
         <property name="SCREENSHOT_TOOLTIP" value="Screenshot"/> <!-- will print current view of image to a file -->
 
@@ -71,6 +71,9 @@ functionality within the main workspace. -->
         <property name="SPECIFIED_FILE" value=" specified file"/>
         
         <property name="DISPLAY_NAME" value="Display"/>
+        <property name="DONE_BUTTON_NAME" value="Done"/>
+        <property name="EDIT_BUTTON_NAME" value="Edit"/>
+        
         <property name="READ_ONLY" value="read-only data"/>
         <property name="CHART_TITLE" value="Plot"/>
         
