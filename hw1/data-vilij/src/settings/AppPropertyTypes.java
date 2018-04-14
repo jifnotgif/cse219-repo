@@ -57,6 +57,19 @@ public enum AppPropertyTypes {
     /* application-specific parameters */
     FONT,
     TEXTBOX_TITLE,
+    ALGORITHM_TYPES_TITLE,
+    ALGORITHM_LIST_ID,
+    
+    ALGORITHM_TITLE_ID,
+    SETTINGS_CSS_CLASS,
+    
+    CLASSIFICATION,
+    CLASSIFICATION_ID,
+    CLASSIFICATION_OPTION_ONE,
+    
+    CLUSTERING,
+    CLUSTERING_ID,
+    CLUSTERING_OPTION_ONE,
     
     
     DATA_FILE_EXT,
@@ -73,6 +86,7 @@ public enum AppPropertyTypes {
     DISPLAY_NAME,
     DONE_BUTTON_NAME,
     EDIT_BUTTON_NAME,
+    RUN_BUTTON_NAME,
     
     READ_ONLY,
     CHART_TITLE,

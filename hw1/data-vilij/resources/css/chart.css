@@ -37,7 +37,7 @@
     -fx-stroke: grey;
 }
 
-#listheading{
+#list-heading{
      -fx-background-color: black;
      -fx-padding: 5 10 5 5;
      -fx-text-fill: white;

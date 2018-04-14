@@ -57,6 +57,21 @@ functionality within the main workspace. -->
         <property name="FONT" value="Arial"/>
         
         <property name="TEXTBOX_TITLE" value="Data file"/>
+        <property name="ALGORITHM_TYPES_TITLE" value= "Algorithm Types"/>
+        <property name="ALGORITHM_LIST_ID" value="list-heading"/>
+        
+        <property name="ALGORITHM_TITLE_ID" value="algoTitle"/>
+        <property name="SETTINGS_CSS_CLASS" value="settings-button"/>
+        
+        <property name="CLASSIFICATION" value="Classification"/>
+        <property name="CLASSIFICATION_ID" value="classification"/>
+        <property name="CLASSIFICATION_OPTION_ONE" value="Random Classification"/>
+        
+        
+        <property name="CLUSTERING" value="Clustering"/>
+        <property name="CLUSTERING_ID" value="clustering"/>
+        <property name="CLUSTERING_OPTION_ONE" value="Random Clustering"/>
+        
         
         <property name="DATA_FILE_EXT" value="*.tsd"/>
         <property name="DATA_FILE_EXT_DESC" value="Tab-Separated Data File"/>
@@ -73,7 +88,7 @@ functionality within the main workspace. -->
         <property name="DISPLAY_NAME" value="Display"/>
         <property name="DONE_BUTTON_NAME" value="Done"/>
         <property name="EDIT_BUTTON_NAME" value="Edit"/>
-        
+        <property name="RUN_BUTTON_NAME" value="Run"/>
         <property name="READ_ONLY" value="read-only data"/>
         <property name="CHART_TITLE" value="Plot"/>
         

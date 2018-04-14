@@ -90,6 +90,7 @@ public final class AppUI extends UITemplate {
     private int numLabels;
     private Set<String> labels;
     private final String NEW_LINE = "\n";
+    private final String TAB = "\t";
     private VBox algorithmList;
     private VBox algorithmPane;
     private VBox algorithmTable;
@@ -101,7 +102,6 @@ public final class AppUI extends UITemplate {
     private Stage algorithmConfigWindow;
     private ArrayList<Button> configButtons;
     private ArrayList<ConfigState> cachedSettings;
-    private ConfigState userSettings;
     private TextField clustersField;
     private TextField iterationsField;
     private TextField intervalsField;
@@ -142,7 +142,8 @@ public final class AppUI extends UITemplate {
         newButton.setOnAction(e -> {
             vPane.getChildren().remove(toggleButton);
             vPane.getChildren().remove(fileInfo);
-
+            
+            clearCachedSettings();
             algorithmTable.getChildren().remove(algorithmTypes);
             vPane.getChildren().remove(algorithmPane);
             vPane.setVisible(false);
@@ -150,7 +151,7 @@ public final class AppUI extends UITemplate {
 
             if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
 //                toggleButton.setVisible(true);
-                toggleButton.setText("Done");
+                toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
 
                 vPane.getChildren().add(toggleButton);
                 vPane.setVisible(true);
@@ -166,6 +167,7 @@ public final class AppUI extends UITemplate {
             vPane.getChildren().remove(fileInfo);
             algorithmList.getChildren().clear();
             resetToggleOptions();
+            clearCachedSettings();
             algorithmTable.getChildren().remove(algorithmTypes);
             vPane.getChildren().remove(algorithmPane);
 
@@ -230,24 +232,20 @@ public final class AppUI extends UITemplate {
 
         vPane = new VBox(10);
         vPane.setSpacing(10);
-
+        vPane.setPrefHeight(applicationTemplate.getUIComponent().getPrimaryScene().getHeight());
         Label boxTitle = new Label(applicationTemplate.manager.getPropertyValue(TEXTBOX_TITLE.name()));
         boxTitle.setFont(Font.font(applicationTemplate.manager.getPropertyValue(FONT.name()), 18));
 
         textArea = new TextArea();
         textArea.setPrefWidth(300);
-//        textArea.setPrefHeight(225);
-        textArea.setMinHeight(200);
-        HBox hPane = new HBox();
-        hPane.setSpacing(10);
-        hPane.setFillHeight(true);
+        textArea.setPrefHeight(150);
 //        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
 //        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         toggleButton = new Button(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
 
 //        Region region = new Region();
 //        HBox.setHgrow(region, Priority.ALWAYS);
-        hPane.getChildren().add(toggleButton);
+        vPane.getChildren().add(toggleButton);
 
         fileInfo = new Text();
         fileInfo.setWrappingWidth(300);
@@ -255,8 +253,8 @@ public final class AppUI extends UITemplate {
         algorithmPane = new VBox(10);
         algorithmTable = new VBox(10);
 
-        Label listHeader = new Label("Algorithm Types");
-        listHeader.setId("listheading");
+        Label listHeader = new Label(applicationTemplate.manager.getPropertyValue(ALGORITHM_TYPES_TITLE.name()));
+        listHeader.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_LIST_ID.name()));
 
         initializeAlgorithmTypes();
         algorithmTable.getChildren().addAll(listHeader, algorithmTypes);
@@ -277,16 +275,17 @@ public final class AppUI extends UITemplate {
         
         Image settingsImage = new Image(getClass().getResourceAsStream(settingsiconPath));
         // set each radiobutton's toggle group to select only one at a time
-        Label classificationTypeTitle = new Label("Classification");
-        classificationTypeTitle.setId("algoTitle");
+        Label classificationTypeTitle = new Label(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()));
+        classificationTypeTitle.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_TITLE_ID.name()));
 
         Button classificationSettings1 = new Button();
-        classificationSettings1.getStyleClass().add("settings-button");
-        classificationSettings1.setId("classification");
+        classificationSettings1.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
+        classificationSettings1.setId(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()));
         classificationSettings1.setGraphic(new ImageView(settingsImage));
         configButtons.add(classificationSettings1);
         HBox classificationOption1 = new HBox();
-        RadioButton classificationType1 = new RadioButton("Random Classification");
+        classificationOption1.setAlignment(Pos.CENTER_LEFT);
+        RadioButton classificationType1 = new RadioButton(applicationTemplate.manager.getPropertyValue(CLASSIFICATION_OPTION_ONE.name()));
         //add algo settings
 
         classificationGroup = new ToggleGroup();
@@ -298,18 +297,18 @@ public final class AppUI extends UITemplate {
 
         classificationTypes.getChildren().addAll(classificationTypeTitle, classificationOption1);
 
-        Label clusteringTypeTitle = new Label("Clustering");
-        clusteringTypeTitle.setId("algoTitle");
+        Label clusteringTypeTitle = new Label(applicationTemplate.manager.getPropertyValue(CLUSTERING.name()));
+        clusteringTypeTitle.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_TITLE_ID.name()));
 
         Button clusteringSettings1 = new Button();
-        clusteringSettings1.getStyleClass().add("settings-button");
-        clusteringSettings1.setId("clustering");
+        clusteringSettings1.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
+        clusteringSettings1.setId(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()));
         clusteringSettings1.setGraphic(new ImageView(settingsImage));
         configButtons.add(clusteringSettings1);
         HBox clusteringOption1 = new HBox();
-        RadioButton clusteringType1 = new RadioButton("Random Clustering");
+        clusteringOption1.setAlignment(Pos.CENTER_LEFT);
+        RadioButton clusteringType1 = new RadioButton(applicationTemplate.manager.getPropertyValue(CLUSTERING_OPTION_ONE.name()));
 
-//add algo settings
         clusteringGroup = new ToggleGroup();
         clusteringType1.setToggleGroup(clusteringGroup);
         clusteringOption1.getChildren().add(clusteringType1);
@@ -321,7 +320,7 @@ public final class AppUI extends UITemplate {
         algorithmPane.getChildren().addAll(algorithmTable, algorithmList);
         vPane.getChildren().add(algorithmPane);
 
-        runAlgorithm = new Button("Run");
+        runAlgorithm = new Button(applicationTemplate.manager.getPropertyValue(RUN_BUTTON_NAME.name()));
         runAlgorithm.setDisable(true);
 
         NumberAxis xAxis = new NumberAxis();
@@ -482,7 +481,7 @@ public final class AppUI extends UITemplate {
                 Label intervalsTitle = new Label("Update Interval: ");
                 content.add(intervalsTitle, 0, 1);
 
-                if (((Button) b).getId() != null && ((Button) b).getId().equals("clustering")) {
+                if (((Button) b).getId() != null && ((Button) b).getId().equals(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()))) {
 
                     Label numClustersTitle = new Label("Number of labels: ");
                     content.add(numClustersTitle, 0, 2);
@@ -589,10 +588,10 @@ public final class AppUI extends UITemplate {
     public void setFileMetaData() {
         numLabels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumLabels();
         labels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getLabels();
-        fileInfo.setText("Number of instances: " + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances()
-                + "\nNumber of labels: " + numLabels
-                + "\nLabel names:\n\t• " + String.join("\n\t• ", labels)
-                + "\nSource: " + dataSource);
+        fileInfo.setText("Number of instances: " + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances() + NEW_LINE
+                + "Number of labels: " + numLabels + NEW_LINE
+                + "Label names:" + NEW_LINE + TAB +"• " + String.join(NEW_LINE + TAB+ "• ", labels) + NEW_LINE
+                + "Source: " + dataSource);
     }
 
     public boolean processData() {
@@ -646,7 +645,7 @@ public final class AppUI extends UITemplate {
 
     private void initializeAlgorithmTypes() {
         algorithmTypes = new ComboBox();
-        algorithmTypes.getItems().addAll("Classification", "Clustering");
+        algorithmTypes.getItems().addAll(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()), applicationTemplate.manager.getPropertyValue(CLUSTERING.name()));
 
         algorithmTypes.setCellFactory(l -> {
             ListCell<String> cell = new ListCell<String>() {
@@ -656,7 +655,7 @@ public final class AppUI extends UITemplate {
                     if (item != null) {
                         setText(item);
 
-                        if (item.equals("Classification")) {
+                        if (item.equals(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()))) {
                             SimpleIntegerProperty labels = new SimpleIntegerProperty(numLabels);
                             disableProperty().bind(new BooleanBinding() {
                                 {
@@ -682,10 +681,10 @@ public final class AppUI extends UITemplate {
             if (algorithmTypes.getSelectionModel().getSelectedItem() == null) {
                 return;
             }
-            if (algorithmTypes.getSelectionModel().getSelectedItem().equals("Classification")) {
+            if (algorithmTypes.getSelectionModel().getSelectedItem().equals(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()))) {
                 algorithmList.getChildren().add(classificationTypes);
             }
-            if (algorithmTypes.getSelectionModel().getSelectedItem().equals("Clustering")) {
+            if (algorithmTypes.getSelectionModel().getSelectedItem().equals(applicationTemplate.manager.getPropertyValue(CLUSTERING.name()))) {
                 algorithmList.getChildren().add(clusteringTypes);
             }
         });
@@ -712,5 +711,9 @@ public final class AppUI extends UITemplate {
 
     private ArrayList<ToggleGroup> getToggleGroups() {
         return algorithmGroups;
+    }
+    
+    private void clearCachedSettings(){
+        cachedSettings.clear();
     }
 }
