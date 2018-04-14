@@ -1,3 +1,7 @@
+/**
+ *
+ * @author David Doo
+ */
 package ui;
 
 import actions.AppActions;
