@@ -90,4 +90,13 @@ public enum AppPropertyTypes {
     
     READ_ONLY,
     CHART_TITLE,
+    
+    INSTANCE_COUNT_INFO,
+    LABEL_COUNT_INFO,
+    LABEL_NAME_INFO,
+    SOURCE_INFO,
+    
+    ALGO_SETTINGS_TITLE,
+    ITERATIONS_TITLE,
+    INTERVALS_TITLE
 }

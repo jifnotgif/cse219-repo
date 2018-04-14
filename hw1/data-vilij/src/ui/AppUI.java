@@ -468,22 +468,22 @@ public final class AppUI extends UITemplate {
             ((Button) b).setOnAction(handler -> {
                 algorithmConfigWindow = new Stage();
                 algorithmConfigWindow.initModality(Modality.APPLICATION_MODAL);
-                algorithmConfigWindow.setTitle("Algorithm Configuration");
+                algorithmConfigWindow.setTitle(applicationTemplate.manager.getPropertyValue(ALGO_SETTINGS_TITLE.name()));
                 VBox mainPane = new VBox(20);
                 mainPane.setPadding(new Insets(10));
-                Label paneTitle = new Label("Algorithm Run Configuration");
+                Label paneTitle = new Label(applicationTemplate.manager.getPropertyValue(ALGO_SETTINGS_TITLE.name()));
                 GridPane content = new GridPane();
                 content.setHgap(20);
                 content.setVgap(50);
                 content.setPadding(new Insets(10));
-                Label iterationsTitle = new Label("Max. Iterations: ");
+                Label iterationsTitle = new Label(applicationTemplate.manager.getPropertyValue(ITERATIONS_TITLE.name()));
                 content.add(iterationsTitle, 0, 0);
-                Label intervalsTitle = new Label("Update Interval: ");
+                Label intervalsTitle = new Label(applicationTemplate.manager.getPropertyValue(INTERVALS_TITLE.name()));
                 content.add(intervalsTitle, 0, 1);
 
                 if (((Button) b).getId() != null && ((Button) b).getId().equals(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()))) {
 
-                    Label numClustersTitle = new Label("Number of labels: ");
+                    Label numClustersTitle = new Label(applicationTemplate.manager.getPropertyValue(LABEL_COUNT_INFO.name()));
                     content.add(numClustersTitle, 0, 2);
 
                     clustersField = new TextField();
@@ -588,10 +588,10 @@ public final class AppUI extends UITemplate {
     public void setFileMetaData() {
         numLabels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumLabels();
         labels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getLabels();
-        fileInfo.setText("Number of instances: " + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances() + NEW_LINE
-                + "Number of labels: " + numLabels + NEW_LINE
-                + "Label names:" + NEW_LINE + TAB +"• " + String.join(NEW_LINE + TAB+ "• ", labels) + NEW_LINE
-                + "Source: " + dataSource);
+        fileInfo.setText(applicationTemplate.manager.getPropertyValue(INSTANCE_COUNT_INFO.name()) + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances() + NEW_LINE
+                + applicationTemplate.manager.getPropertyValue(LABEL_COUNT_INFO.name()) + numLabels + NEW_LINE
+                + applicationTemplate.manager.getPropertyValue(LABEL_NAME_INFO.name()) + NEW_LINE + TAB +"• " + String.join(NEW_LINE + TAB+ "• ", labels) + NEW_LINE
+                + applicationTemplate.manager.getPropertyValue(SOURCE_INFO.name()) + dataSource);
     }
 
     public boolean processData() {

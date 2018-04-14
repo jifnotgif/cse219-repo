@@ -92,6 +92,14 @@ functionality within the main workspace. -->
         <property name="READ_ONLY" value="read-only data"/>
         <property name="CHART_TITLE" value="Plot"/>
         
+        <property name="INSTANCE_COUNT_INFO" value="Number of instances: "/>
+        <property name="LABEL_COUNT_INFO" value="Number of labels: "/>
+        <property name="LABEL_NAME_INFO" value="Label names:"/>
+        <property name="SOURCE_INFO" value="Source: "/>
+        
+        <property name="ALGO_SETTINGS_TITLE" value="Algorithm Run Configuration"/>
+        <property name="ITERATIONS_TITLE" value="Max. Iterations: "/>
+        <property name="INTERVALS_TITLE" value="Update Interval: "/>
     </property_list>
     <property_options_list/>
 </properties>
