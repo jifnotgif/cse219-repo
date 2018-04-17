@@ -1,5 +1,7 @@
 package dataprocessors;
 
+import classification.RandomClassifier;
+import data.DataSet;
 import javafx.geometry.Point2D;
 import javafx.scene.chart.XYChart;
 
@@ -8,7 +10,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javafx.scene.Cursor;
+import javafx.scene.chart.XYChart.Data;
 import javafx.scene.control.Tooltip;
+import javafx.scene.shape.Line;
+import ui.ConfigState;
 
 /**
  * The data files used by this data visualization applications follow a tab-separated format, where each data point is
@@ -30,16 +35,13 @@ public final class TSDProcessor {
             super(String.format("Invalid name '%s" + NAME_ERROR_MSG , name));
         }
     }
-
-    private Map<String, String>  dataLabels;
-    private Map<String, Point2D> dataPoints;
+    private XYChart.Series<Number,Number> algorithmLine;
+    private DataSet              data;
     private Set<String>          labels;
     private final String         NEW_LINE = "\n";
     private final String         NAME_SYMBOL ="@";
     private final String         TAB = "\t";
     public TSDProcessor() {
-        dataLabels = new HashMap<>();
-        dataPoints = new HashMap<>();
     }
 
     /**
@@ -49,6 +51,7 @@ public final class TSDProcessor {
      * @throws Exception if the input string does not follow the <code>.tsd</code> data format
      */
     public void processString(String tsdString) throws Exception {
+        this.data = new DataSet();
         AtomicBoolean containsDuplicates = new AtomicBoolean(false);
         AtomicBoolean hadAnError   = new AtomicBoolean(false);
         AtomicInteger lineCount    = new AtomicInteger(1);
@@ -73,21 +76,21 @@ public final class TSDProcessor {
                       String   label = list.get(1);
                       String[] pair  = list.get(2).split(",");
                       Point2D  point = new Point2D(Double.parseDouble(pair[0]), Double.parseDouble(pair[1]));
-                      dataLabels.put(name, label);
-                      dataPoints.put(name, point);
+                      data.getLabels().put(name, label);
+                      data.getLocations().put(name, point);
                   } catch (Exception e) {
                       linesWithError.add((Integer)lineCount.get());
                       errorMessage.setLength(0);
                       // if all data points with error are wanted, reate a new arraylist of names and append to message instead of list.get(0)
-                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);
+                      errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);  
                       hadAnError.set(true);
                   }
                   lineCount.incrementAndGet();
               });
-        if(containsDuplicates.get()){
-            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);
+        if (containsDuplicates.get()) {
+            errorMessage.append("'.\nDuplicate found on line(s): ").append(linesWithError.toString().substring(1, linesWithError.toString().length() - 1)).append(NEW_LINE);
             hadAnError.set(true);
-            
+
         }
         if (errorMessage.length() > 0)
             throw new InvalidDataNameException(errorMessage.toString());
@@ -95,7 +98,7 @@ public final class TSDProcessor {
     }
 
     public boolean isChartEmpty(){
-        return dataLabels.isEmpty();
+        return data.getLabels().isEmpty();
     }
     /**
      * Exports the data to the specified 2-D chart.
@@ -104,17 +107,17 @@ public final class TSDProcessor {
      */
     void toChartData(XYChart<Number, Number> chart) {
         AtomicInteger counter = new AtomicInteger(0);
-        labels = new HashSet<>(dataLabels.values());
+        labels = new HashSet<>(data.getLabels().values());
         for (String label : labels) {
             XYChart.Series<Number, Number> series = new XYChart.Series<>();
             series.setName(label);
-            dataLabels.entrySet().stream().filter(entry -> entry.getValue().equals(label)).forEach(entry -> {
-                Point2D point = dataPoints.get(entry.getKey());
+            data.getLabels().entrySet().stream().filter(entry -> entry.getValue().equals(label)).forEach(entry -> {
+                Point2D point = data.getLocations().get(entry.getKey());
                 series.getData().add(new XYChart.Data<>(point.getX(), point.getY()));
             });
             chart.getData().add(series);
             for(XYChart.Data<Number,Number> d : series.getData()){
-                dataLabels.entrySet().stream().filter(entry -> entry.getValue().equals(label)).forEach(entry -> {
+                data.getLabels().entrySet().stream().filter(entry -> entry.getValue().equals(label)).forEach(entry -> {
                     if(counter.get() < series.getData().size()) {
                         Tooltip.install(series.getData().get(counter.get()).getNode(), new Tooltip(entry.getKey()));
                         series.getData().get(counter.getAndIncrement()).getNode().setCursor(Cursor.HAND);
@@ -129,9 +132,9 @@ public final class TSDProcessor {
     private void calculateAverageLine(XYChart<Number,Number> chart){
         XYChart.Series<Number,Number> averageLine = new XYChart.Series<>();
         averageLine.setName("Average Y-value");
-        double y = dataPoints.values().stream().mapToDouble(Point2D::getY).reduce(0, (a,b) -> a+b)/dataPoints.size();
-        double x1 = dataPoints.values().stream().mapToDouble(Point2D::getX).min().orElse(0.0);
-        double x2 = dataPoints.values().stream().mapToDouble(Point2D::getX).max().orElse(0.0);
+        double y = data.getLocations().values().stream().mapToDouble(Point2D::getY).reduce(0, (a,b) -> a+b)/data.getLocations().size();
+        double x1 = data.getLocations().values().stream().mapToDouble(Point2D::getX).min().orElse(0.0);
+        double x2 = data.getLocations().values().stream().mapToDouble(Point2D::getX).max().orElse(0.0);
         if (x1 == x2) {
             x1 = -10.0;
             x2 = 10.0;
@@ -146,8 +149,10 @@ public final class TSDProcessor {
     }
     
     void clear() {
-        dataPoints.clear();
-        dataLabels.clear();
+        if(data != null){
+            data.getLocations().clear();
+            data.getLabels().clear();
+        }
     }
 
     private String checkedname(String name) throws InvalidDataNameException {
@@ -157,16 +162,61 @@ public final class TSDProcessor {
     }
     
     public int getNumInstances(){
-        return dataLabels.size();
+        return data.getLabels().size();
     }
     public int getNumLabels(){
-        labels = new HashSet<>(dataLabels.values());
+        labels = new HashSet<>(data.getLabels().values());
         return labels.size();
     }
     
     public Set<String> getLabels(){
-        labels = new HashSet<>(dataLabels.values());
+        labels = new HashSet<>(data.getLabels().values());
         return labels;
+    }
+    
+    public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
+        RandomClassifier test = new RandomClassifier(data, settings);
+        
+        //if continuous run, else not a continuous run: stop loop early, and don't run until user clicks next
+        if(test.tocontinue() == true){
+            
+            test.run();
+            
+            algorithmLine = new XYChart.Series<>();
+            List<Integer> output = test.getOutput();
+            int y1 =  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
+            int y2=  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
+            
+            int x1 = -10;
+            int x2 = 10;
+            
+            
+            algorithmLine.getData().add(new XYChart.Data<>(x1,y1));
+            algorithmLine.getData().add(new XYChart.Data<>(x2,y2));
+            chart.getData().add(algorithmLine);
+            //update gui
+        }
+        else{
+            while(test.getIterationCounter() != test.getMaxIterations()){
+                
+            test.run();
+            test.incrementCounter();
+            if(algorithmLine != null) chart.getData().remove(algorithmLine);
+            algorithmLine = new XYChart.Series<>();
+            List<Integer> output = test.getOutput();
+            int y1 =  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
+            int y2=  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
+            
+            int x1 = -10;
+            int x2 = 10;
+            
+            
+            algorithmLine.getData().add(new XYChart.Data<>(x1,y1));
+            algorithmLine.getData().add(new XYChart.Data<>(x2,y2));
+            chart.getData().add(algorithmLine);
+            }
+            
+        }
     }
     
 }

@@ -99,7 +99,6 @@ public final class AppActions implements ActionComponent {
     @Override
     public void handleLoadRequest(){
         errorFlag = false;
-        ((AppData)applicationTemplate.getDataComponent()).clear();
         FileChooser fc = new FileChooser();
         initializeFileChooser(fc, false);
         currentFile = fc.showOpenDialog(applicationTemplate.getUIComponent().getPrimaryWindow());

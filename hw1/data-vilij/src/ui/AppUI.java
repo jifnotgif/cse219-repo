@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
@@ -104,6 +106,7 @@ public final class AppUI extends UITemplate {
     private ArrayList<ToggleGroup> algorithmGroups;
     private Button runAlgorithm;
     private Stage algorithmConfigWindow;
+    private ConfigState currentSettings;
     private ArrayList<Button> configButtons;
     private ArrayList<ConfigState> cachedSettings;
     private TextField clustersField;
@@ -149,6 +152,7 @@ public final class AppUI extends UITemplate {
             
             clearCachedSettings();
             algorithmTable.getChildren().remove(algorithmTypes);
+            algorithmPane.getChildren().remove(runAlgorithm);
             vPane.getChildren().remove(algorithmPane);
             vPane.setVisible(false);
             applicationTemplate.getActionComponent().handleNewRequest();
@@ -290,6 +294,7 @@ public final class AppUI extends UITemplate {
         HBox classificationOption1 = new HBox();
         classificationOption1.setAlignment(Pos.CENTER_LEFT);
         RadioButton classificationType1 = new RadioButton(applicationTemplate.manager.getPropertyValue(CLASSIFICATION_OPTION_ONE.name()));
+        classificationType1.setId("Random Classification");
         //add algo settings
 
         classificationGroup = new ToggleGroup();
@@ -312,6 +317,7 @@ public final class AppUI extends UITemplate {
         HBox clusteringOption1 = new HBox();
         clusteringOption1.setAlignment(Pos.CENTER_LEFT);
         RadioButton clusteringType1 = new RadioButton(applicationTemplate.manager.getPropertyValue(CLUSTERING_OPTION_ONE.name()));
+        clusteringType1.setId("Random Clustering");
 
         clusteringGroup = new ToggleGroup();
         clusteringType1.setToggleGroup(clusteringGroup);
@@ -526,7 +532,7 @@ public final class AppUI extends UITemplate {
                     runOption.setSelected(cachedSettings.get(configButtons.indexOf(((Button)b))).isContinuousState());
                 }
 
-                ConfigState currentSettings = new ConfigState();
+                currentSettings = new ConfigState();
                 currentSettings.setBtn((Button) b);
                 mainPane.getChildren().addAll(paneTitle, content);
 
@@ -574,14 +580,28 @@ public final class AppUI extends UITemplate {
             ((ToggleGroup) group).selectedToggleProperty().addListener(listener -> {
                 if (((ToggleGroup) group).selectedToggleProperty().getValue() != null) {
                     runAlgorithm.setDisable(false);
+                    runAlgorithm.setOnAction(e ->{
+                        if(currentSettings == null) currentSettings = new ConfigState();
+                        if(((RadioButton)((ToggleGroup) group).getSelectedToggle()).getId().equals("Random Classification")){
+                            ((AppData)applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getChart());
+                        }
+                        if(((RadioButton)((ToggleGroup) group).getSelectedToggle()).getId().equals("Random Clustering")){
+                            System.out.println("do nothing");
+                            //get settings
+                            //run randomclustering algorithm
+                        }
+                    });
                 }
             });
         }
-        while (algorithmConfigWindow != null) {
-            algorithmConfigWindow.setOnCloseRequest(value -> {
-
-            });
-        }
+//        while (algorithmConfigWindow != null) {
+//            algorithmConfigWindow.setOnCloseRequest(value -> {
+//
+//            });
+//        }
+        
+        
+        
 
     }
 
@@ -601,30 +621,29 @@ public final class AppUI extends UITemplate {
     public boolean processData() {
         try {
             clear();
-            ((AppData) applicationTemplate.getDataComponent()).clear();
-            String currentText = textArea.getText();
-            ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
-
-            ArrayList<String> fileDataEntries = ((AppData) applicationTemplate.getDataComponent()).getFileData();
-
-            if (fileDataEntries != null) {
-                for (String j : fileDataEntries) {
-                    if (!newDataEntries.contains(j)) {
-                        newDataEntries.add(j);
-                    }
-                }
-            }
-
-            if (((AppActions) applicationTemplate.getActionComponent()).getDataPath() != null) {
-                storedData = String.join(NEW_LINE, newDataEntries);
-            } else {
-                storedData = textArea.getText();
-            }
-
-            if (dataSource == null) {
-                dataSource = "";
-            }
-            ((AppData) applicationTemplate.getDataComponent()).loadData(storedData);
+//            String currentText = textArea.getText();
+//            ArrayList<String> newDataEntries = new ArrayList<>(Arrays.asList(currentText.split(NEW_LINE)));
+//            ArrayList<String> fileDataEntries = ((AppData) applicationTemplate.getDataComponent()).getFileData();
+//
+//            if (fileDataEntries != null) {
+//                for (String j : fileDataEntries) {
+//                    if (!newDataEntries.contains(j)) {
+//                        newDataEntries.add(j);
+//                    }
+//                }
+//            }
+//
+//            if (((AppActions) applicationTemplate.getActionComponent()).getDataPath() != null) {
+//                storedData = String.join(NEW_LINE, newDataEntries);
+//            } else {
+//                storedData = textArea.getText();
+//            }
+//
+//            if (dataSource == null) {
+//                dataSource = "";
+//            }
+            
+            ((AppData) applicationTemplate.getDataComponent()).loadData(textArea.getText());
 
             setFileMetaData();
             if (hasNewText) {

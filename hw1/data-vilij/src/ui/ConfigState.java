@@ -1,6 +1,7 @@
 
 package ui;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.scene.control.Button;
 
 /**
@@ -13,16 +14,16 @@ public class ConfigState {
     private int iterations;
     private int intervals;
     private int labels;
-    private boolean continuousState;
+    private AtomicBoolean continuousState;
     
-    public ConfigState(Button btn, int iterations, int intervals, int labels, boolean continuousState){
+    public ConfigState(Button btn, int iterations, int intervals, int labels, AtomicBoolean continuousState){
         this.btn = btn;
         this.iterations = iterations;
         this.intervals = intervals;
         this.labels = labels;
         this.continuousState = continuousState;
     }
-    public ConfigState(Button btn, int iterations, int intervals, boolean continuousState){
+    public ConfigState(Button btn, int iterations, int intervals, AtomicBoolean continuousState){
         this.btn = btn;
         this.iterations = iterations;
         this.intervals = intervals;
@@ -31,9 +32,9 @@ public class ConfigState {
     }
     public ConfigState(){
         this.btn = null;
-        this.iterations = 0;
-        this.intervals = 0;
-        this.continuousState = false;
+        this.iterations = 20;
+        this.intervals = 5;
+        this.continuousState = new AtomicBoolean(false);
         this.labels = 0;
     }
     public Button getBtn() {
@@ -69,11 +70,11 @@ public class ConfigState {
     }
 
     public boolean isContinuousState() {
-        return continuousState;
+        return continuousState.get();
     }
 
     public void setContinuousState(boolean continuousState) {
-        this.continuousState = continuousState;
+        this.continuousState.set(continuousState);
     }
     
     

@@ -46,6 +46,7 @@ public class AppData implements DataComponent {
     @Override
     public void loadData(Path dataFilePath) {
         try{
+            clear();
             if(dataEntries != null && !dataEntries.isEmpty()) resetData();
             AtomicInteger index = new AtomicInteger(0);
             TextArea textbox = ((AppUI)applicationTemplate.getUIComponent()).getTextArea();
@@ -101,6 +102,7 @@ public class AppData implements DataComponent {
     public void loadData(String dataString) throws Exception {
         try{
 //            if(dataEntries != null && !dataEntries.isEmpty()) resetData();
+            clear();
             processor.processString(dataString);
         }
         catch(Exception e){
@@ -151,4 +153,5 @@ public class AppData implements DataComponent {
     public void resetData(){
         dataEntries.clear();
     }
+    
 }
