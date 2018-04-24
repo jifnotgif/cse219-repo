@@ -102,6 +102,7 @@ public class RandomClassifier extends Classifier {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color:#a9ff00;");
                         calculateLineOutput(chart);
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
                     break;
@@ -136,6 +137,7 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume Algorithm");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color: #EED202;");
                         calculateLineOutput(chart);
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
 
 //                        //update gui then set to true again
@@ -147,6 +149,7 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color:#a9ff00;");
                         calculateLineOutput(chart);
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
                     break;
