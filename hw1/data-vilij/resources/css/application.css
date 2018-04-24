@@ -10,10 +10,14 @@
     -fx-border-style: solid; 
     -fx-border-width: 4px;
     -fx-border-insets: -2, -2, 0, 0;
+    -fx-background-color: transparent;
 
 }
 
 #scatter .chart-plot-background{
+    -fx-border-color:black;
+    -fx-border-style:solid;
+    -fx-border-width: 2px;
     -fx-background-color: transparent;
 }
 
@@ -69,4 +73,14 @@
     -fx-border-color: transparent;
     -fx-border-width: 0.1, 0.1;
     -fx-border-radius: 0, 0;
+}
+
+#active {
+    -fx-background-color: #a9ff00;
+}
+#busy {
+    -fx-background-color: #EED202;
+}
+#disabled{
+    -fx-background-color: #B33A3A;
 }

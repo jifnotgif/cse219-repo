@@ -122,13 +122,6 @@ public final class AppUI extends UITemplate {
     private Toggle algorithmValue;
     private ToggleGroup toggleGroup;
 
-    public ScatterChart<Number, Number> getChart() {
-        return scatterChart;
-    }
-
-    public StackPane getChartPane() {
-        return charts;
-    }
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
@@ -243,6 +236,8 @@ public final class AppUI extends UITemplate {
         numLabels = 0;
         currentSettings = null;
         runAlgorithm.setDisable(true);
+        runAlgorithm.setStyle(null);
+        runAlgorithm.setText("Run");
 
     }
 
@@ -346,7 +341,7 @@ public final class AppUI extends UITemplate {
 
         runAlgorithm = new Button(applicationTemplate.manager.getPropertyValue(RUN_BUTTON_NAME.name()));
         runAlgorithm.setDisable(true);
-        runAlgorithm.setStyle("-fx-background-color:#a9ff00;");
+        runAlgorithm.setId("active");
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
 
         NumberAxis xAxis = new NumberAxis();
@@ -371,6 +366,7 @@ public final class AppUI extends UITemplate {
         scatterChart.getXAxis().setVisible(false);
         scatterChart.getYAxis().setVisible(false);
         scatterChart.setId("scatter");
+        
         final RowConstraints row = new RowConstraints();
         row.setPrefHeight(scatterChart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
@@ -379,7 +375,7 @@ public final class AppUI extends UITemplate {
         pane.getRowConstraints().add(row);
         pane.getColumnConstraints().addAll(textColumn, chartColumn);
 
-        scatterChart.prefWidthProperty().bind(lineChart.widthProperty());
+//        scatterChart.prefWidthProperty().bind(lineChart.widthProperty());
 //        lineChart.minWidthProperty().bind(scatterChart.widthProperty());
 //        lineChart.maxWidthProperty().bind(scatterChart.widthProperty());
 
@@ -635,9 +631,6 @@ public final class AppUI extends UITemplate {
 //        }
 
         runAlgorithm.setOnAction(e -> {
-            if (currentSettings == null) {
-                currentSettings = new ConfigState();
-            }
             lineChart.getData().clear();
             scatterChart.getData().clear();
             if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Classification")) {
@@ -783,6 +776,14 @@ public final class AppUI extends UITemplate {
 
     private void clearCachedSettings() {
         cachedSettings.clear();
+    }
+
+    public ScatterChart<Number, Number> getChart() {
+        return scatterChart;
+    }
+
+    public StackPane getChartPane() {
+        return charts;
     }
 
     public Button getRunButton() {

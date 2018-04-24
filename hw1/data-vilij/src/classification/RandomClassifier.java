@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.chart.XYChart;
+import static settings.AppPropertyTypes.CSS_PATH;
 import ui.AppUI;
 import ui.ConfigState;
 import vilij.templates.ApplicationTemplate;
@@ -90,7 +91,7 @@ public class RandomClassifier extends Classifier {
                     System.out.printf("Iteration number %d: ", i); //
                     flush();
                     Platform.runLater(() -> {
-                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color:#B33A3A;");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
                         calculateLineOutput(chart);
                     });
 
@@ -100,8 +101,7 @@ public class RandomClassifier extends Classifier {
                     flush();
 
                     Platform.runLater(() -> {
-                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color:#a9ff00;");
-                        calculateLineOutput(chart);
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
@@ -114,7 +114,7 @@ public class RandomClassifier extends Classifier {
                 }
             }
         } else {
-            for (int i = 0; i <=  updateInterval; i++) {
+            for (int i = 1; i <=  updateInterval; i++) {
                 counter.getAndIncrement();
                 int xCoefficient = new Double(RAND.nextDouble() * 100).intValue();
                 int yCoefficient = new Double(RAND.nextDouble() * 100).intValue();
@@ -133,9 +133,8 @@ public class RandomClassifier extends Classifier {
                     System.out.printf("Iteration number %d: ", counter.get()); 
                     flush();
                     Platform.runLater(() -> {
-                        
-                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume Algorithm");
-                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color: #EED202;");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
                         calculateLineOutput(chart);
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
@@ -146,12 +145,13 @@ public class RandomClassifier extends Classifier {
                     System.out.printf("Iteration number %d: ", counter.get());
                     flush();
                     Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
-                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setStyle("-fx-background-color:#a9ff00;");
                         calculateLineOutput(chart);
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
+                    counter.set(1);
                     break;
                 }
             }
