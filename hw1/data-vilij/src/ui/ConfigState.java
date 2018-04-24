@@ -32,9 +32,9 @@ public class ConfigState {
     }
     public ConfigState(){
         this.btn = null;
-        this.iterations = 20;
+        this.iterations = 1000;
         this.intervals = 5;
-        this.continuousState = new AtomicBoolean(false);
+        this.continuousState = new AtomicBoolean(true);
         this.labels = 0;
     }
     public Button getBtn() {

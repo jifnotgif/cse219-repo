@@ -4,6 +4,7 @@ import algorithms.Classifier;
 import data.DataSet;
 
 import java.io.IOException;
+import static java.lang.Thread.sleep;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +12,11 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.application.Platform;
+import javafx.geometry.Point2D;
+import javafx.scene.chart.XYChart;
+import ui.AppUI;
 import ui.ConfigState;
+import vilij.templates.ApplicationTemplate;
 
 /**
  * @author Ritwik Banerjee
@@ -19,10 +24,13 @@ import ui.ConfigState;
 public class RandomClassifier extends Classifier {
 
     private static final Random RAND = new Random();
-
+    
     @SuppressWarnings("FieldCanBeLocal")
     // this mock classifier doesn't actually use the data, but a real classifier will
+    ApplicationTemplate applicationTemplate;
+    
     private DataSet dataset;
+    private XYChart<Number,Number> chart;
     
     private final AtomicInteger counter;
     private final int maxIterations;
@@ -31,6 +39,7 @@ public class RandomClassifier extends Classifier {
     // currently, this value does not change after instantiation
     private final AtomicBoolean tocontinue;
     private List<Integer> output;
+    private XYChart.Series<Number,Number> algorithmLine;
 
     @Override
     public int getMaxIterations() {
@@ -47,8 +56,10 @@ public class RandomClassifier extends Classifier {
         return tocontinue.get();
     }
 
-    public RandomClassifier(DataSet dataset, ConfigState settings) {
+    public RandomClassifier(DataSet dataset, XYChart<Number,Number> chart, ApplicationTemplate ui, ConfigState settings) {
         this.dataset = dataset;
+        this.chart = chart;
+        this.applicationTemplate = ui;
         this.maxIterations = settings.getIterations();
         this.updateInterval = settings.getIntervals();
         this.tocontinue = new AtomicBoolean(settings.isContinuousState());
@@ -61,6 +72,7 @@ public class RandomClassifier extends Classifier {
 //            @Override
 //            public void run() {
             if(tocontinue()){
+                ((AppUI)applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
                 for (int i = counter.get(); i <= maxIterations && tocontinue(); i++) {
                     counter.getAndIncrement();
                     int xCoefficient = new Double(RAND.nextDouble() * 100).intValue();
@@ -84,13 +96,22 @@ public class RandomClassifier extends Classifier {
                     if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
                         System.out.printf("Iteration number %d: ", i);
                         flush();
+                            Platform.runLater(()-> {
+                    calculateLineOutput(chart);
+                });
                         break;
                     }
+                    try{
+                        sleep(10);
+                    }
+                    catch(InterruptedException e){
+                        throw new RuntimeException(e);
+                    }
                 }
+                ((AppUI)applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
             }
             else{
-            for (int i = counter.get(); i <= maxIterations/updateInterval; i++) {
-                    counter.getAndIncrement();
+            for (int i = 0; i <= maxIterations/updateInterval; i++) {
                     int xCoefficient = new Double(RAND.nextDouble() * 100).intValue();
                     int yCoefficient = new Double(RAND.nextDouble() * 100).intValue();
                     if(yCoefficient == 0) yCoefficient = 1;
@@ -140,5 +161,27 @@ public class RandomClassifier extends Classifier {
     public void incrementCounter(){
         counter.addAndGet(updateInterval);
     }
+    private void calculateLineOutput(XYChart<Number,Number> chart){
+        if(algorithmLine != null) {
+            algorithmLine = null;
+        }
+        algorithmLine = new XYChart.Series<>();
+        algorithmLine.setName("Classification Line");
+//        List<Integer> output = ;
+        
+        int x1 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
+        int x2 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
+        if(output== null ) return;
+        int y1 = (getOutput().get(2) - getOutput().get(0) * x1) / getOutput().get(1);
+        int y2 = (getOutput().get(2) - getOutput().get(0) * x2) / getOutput().get(1);
 
+        algorithmLine.getData().add(new XYChart.Data<>(x1, y1));
+        algorithmLine.getData().add(new XYChart.Data<>(x2, y2));
+        chart.getData().add(algorithmLine);
+
+//        algorithmLine.getNode().setId("averageY");
+//        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
+//            x.getNode().setVisible(false);
+//        }
+    }
 }

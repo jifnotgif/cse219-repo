@@ -39,7 +39,7 @@ public class AppData implements DataComponent {
     private final String        NEW_LINE = "\n";
 
     public AppData(ApplicationTemplate applicationTemplate) {
-        this.processor = new TSDProcessor();
+        this.processor = new TSDProcessor(applicationTemplate);
         this.applicationTemplate = applicationTemplate;
     }
 
@@ -139,7 +139,7 @@ public class AppData implements DataComponent {
 
     
     public void displayData() {
-        processor.toChartData(((AppUI) applicationTemplate.getUIComponent()).getChart());
+            processor.toChartData(((AppUI) applicationTemplate.getUIComponent()).getChart());
     }
     
     public TSDProcessor getProcessor(){

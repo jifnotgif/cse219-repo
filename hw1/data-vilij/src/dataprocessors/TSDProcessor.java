@@ -1,19 +1,25 @@
 package dataprocessors;
 
+import algorithms.Algorithm;
 import classification.RandomClassifier;
 import data.DataSet;
+import static java.lang.Thread.sleep;
 import javafx.geometry.Point2D;
 import javafx.scene.chart.XYChart;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javafx.application.Platform;
 import javafx.scene.Cursor;
 import javafx.scene.chart.XYChart.Data;
 import javafx.scene.control.Tooltip;
 import javafx.scene.shape.Line;
 import ui.ConfigState;
+import vilij.templates.ApplicationTemplate;
 
 /**
  * The data files used by this data visualization applications follow a tab-separated format, where each data point is
@@ -35,13 +41,15 @@ public final class TSDProcessor {
             super(String.format("Invalid name '%s" + NAME_ERROR_MSG , name));
         }
     }
-    private XYChart.Series<Number,Number> algorithmLine;
     private DataSet              data;
     private Set<String>          labels;
     private final String         NEW_LINE = "\n";
     private final String         NAME_SYMBOL ="@";
     private final String         TAB = "\t";
-    public TSDProcessor() {
+    ApplicationTemplate applicationTemplate;
+    
+    public TSDProcessor(ApplicationTemplate applicationTemplate) {
+        this.applicationTemplate = applicationTemplate;
     }
 
     /**
@@ -126,27 +134,9 @@ public final class TSDProcessor {
             counter.set(0);
             }
         }
-        calculateAverageLine(chart);
     }
     
-    private void calculateAverageLine(XYChart<Number,Number> chart){
-        XYChart.Series<Number,Number> averageLine = new XYChart.Series<>();
-        averageLine.setName("Average Y-value");
-        double y = data.getLocations().values().stream().mapToDouble(Point2D::getY).reduce(0, (a,b) -> a+b)/data.getLocations().size();
-        double x1 = data.getLocations().values().stream().mapToDouble(Point2D::getX).min().orElse(0.0);
-        double x2 = data.getLocations().values().stream().mapToDouble(Point2D::getX).max().orElse(0.0);
-        if (x1 == x2) {
-            x1 = -10.0;
-            x2 = 10.0;
-        }
-        averageLine.getData().add(new XYChart.Data<>(x1,y));
-        averageLine.getData().add(new XYChart.Data<>(x2,y));
-        chart.getData().add(averageLine);
-        averageLine.getNode().setId("averageY");
-        for(XYChart.Data<Number,Number> x : averageLine.getData()){
-            x.getNode().setVisible(false);
-        }
-    }
+
     
     void clear() {
         if(data != null){
@@ -175,48 +165,17 @@ public final class TSDProcessor {
     }
     
     public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
-        RandomClassifier test = new RandomClassifier(data, settings);
+        RandomClassifier test = new RandomClassifier(data, chart, applicationTemplate, settings);
+        Thread t = new Thread(test);
+            t.start();
         
         //if continuous run, else not a continuous run: stop loop early, and don't run until user clicks next
-        if(test.tocontinue() == true){
-            
-            test.run();
-            
-            algorithmLine = new XYChart.Series<>();
-            List<Integer> output = test.getOutput();
-            int y1 =  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
-            int y2=  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
-            
-            int x1 = -10;
-            int x2 = 10;
             
             
-            algorithmLine.getData().add(new XYChart.Data<>(x1,y1));
-            algorithmLine.getData().add(new XYChart.Data<>(x2,y2));
-            chart.getData().add(algorithmLine);
-            //update gui
-        }
-        else{
-            while(test.getIterationCounter() != test.getMaxIterations()){
-                
-            test.run();
-            test.incrementCounter();
-            if(algorithmLine != null) chart.getData().remove(algorithmLine);
-            algorithmLine = new XYChart.Series<>();
-            List<Integer> output = test.getOutput();
-            int y1 =  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
-            int y2=  (output.get(2) - output.get(0)) / output.get(1) + (int)data.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
             
-            int x1 = -10;
-            int x2 = 10;
-            
-            
-            algorithmLine.getData().add(new XYChart.Data<>(x1,y1));
-            algorithmLine.getData().add(new XYChart.Data<>(x2,y2));
-            chart.getData().add(algorithmLine);
-            }
-            
-        }
+         
     }
-    
 }
+    
+    
+

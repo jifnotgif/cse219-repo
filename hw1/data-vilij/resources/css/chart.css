@@ -5,29 +5,39 @@
     -fx-horizontal-zero-line-visible: false;
     
 }
-.chart-plot-background {
-    -fx-border-color: black; 
+#line .chart-plot-background {
+    -fx-border-color: transparent; 
     -fx-border-style: solid; 
-    -fx-border-width: 4px; 
-    -fx-border-insets: -2 -2 0 0;
+    -fx-border-width: 4px;
+    -fx-border-insets: -2, -2, 0, 0;
+
 }
-/*.chart-symbol { 
+
+#scatter .chart-plot-background{
+    -fx-background-color: transparent;
+}
+
+.chart-symbol { 
     -fx-background-radius: 5px;
     -fx-padding: 5px;
-}*/
+    /*-fx-shape: "M0,0 l10,0";*/
+}
 
 .chart-series-line{
     -fx-stroke:transparent;
 }
+
 
 #averageY.chart-series-line{
     -fx-stroke: #B22222;
 }
 
 .axis{
+    -fx-stroke: black;
     -fx-tick-length: 20;
     -fx-minor-tick-length: 10;
     -fx-tick-label-fill: brown;
+    -fx-border-color: transparent;
 }
 .axis-tick-mark {
     -fx-stroke: forestgreen;

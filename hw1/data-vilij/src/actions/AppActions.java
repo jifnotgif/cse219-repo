@@ -22,6 +22,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.LineChart;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.StackPane;
 import javax.imageio.ImageIO;
 import ui.AppUI;
 import vilij.components.ErrorDialog;
@@ -150,8 +151,8 @@ public final class AppActions implements ActionComponent {
         errorFlag = false;        
         try{
             if(!(((AppData)applicationTemplate.getDataComponent()).getProcessor().isChartEmpty())){
-                LineChart chart = ((AppUI)applicationTemplate.getUIComponent()).getChart();
-                WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+                StackPane pane = ((AppUI)applicationTemplate.getUIComponent()).getChartPane();
+                WritableImage image = pane.snapshot(null, null);
                
                 FileChooser fc = new FileChooser();
                 initializeFileChooser(fc, true);

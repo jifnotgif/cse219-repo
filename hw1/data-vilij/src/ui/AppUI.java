@@ -48,15 +48,18 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.util.Callback;
@@ -82,7 +85,8 @@ public final class AppUI extends UITemplate {
     private Button scrnshotButton; // toolbar button to take a screenshot of the data
     private String scrnshoticonPath;
     private String settingsiconPath;
-    private LineChart<Number, Number> chart;               // the chart where data will be displayed
+    private ScatterChart<Number, Number> scatterChart;               // the chart where data will be displayed
+    private LineChart<Number, Number> lineChart;
 //    private Button displayButton;  // workspace button to display data on the chart
     private Button toggleButton;
     private TextArea textArea;       // text area for new data input
@@ -91,7 +95,9 @@ public final class AppUI extends UITemplate {
     private VBox vPane;
     private VBox classificationTypes;
     private VBox clusteringTypes;
+    private StackPane charts;
     private Text fileInfo;
+
     private String dataSource;
     private int numLabels;
     private Set<String> labels;
@@ -113,10 +119,15 @@ public final class AppUI extends UITemplate {
     private TextField iterationsField;
     private TextField intervalsField;
     private CheckBox runOption;
-    
+    private Toggle algorithmValue;
+    private ToggleGroup toggleGroup;
 
-    public LineChart<Number, Number> getChart() {
-        return chart;
+    public ScatterChart<Number, Number> getChart() {
+        return scatterChart;
+    }
+
+    public StackPane getChartPane() {
+        return charts;
     }
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
@@ -149,7 +160,7 @@ public final class AppUI extends UITemplate {
         newButton.setOnAction(e -> {
             vPane.getChildren().remove(toggleButton);
             vPane.getChildren().remove(fileInfo);
-            
+
             clearCachedSettings();
             algorithmTable.getChildren().remove(algorithmTypes);
             algorithmPane.getChildren().remove(runAlgorithm);
@@ -169,20 +180,21 @@ public final class AppUI extends UITemplate {
 
         saveButton.setOnAction(e -> applicationTemplate.getActionComponent().handleSaveRequest());
         loadButton.setOnAction(e -> {
-            vPane.setVisible(false);
-            algorithmPane.getChildren().remove(runAlgorithm);
-            runAlgorithm.setVisible(false);
-            vPane.getChildren().remove(fileInfo);
-            algorithmList.getChildren().clear();
-            resetToggleOptions();
-            clearCachedSettings();
-            algorithmTable.getChildren().remove(algorithmTypes);
-            vPane.getChildren().remove(algorithmPane);
 
             applicationTemplate.getActionComponent().handleLoadRequest();
 
             //Don't continue if data in file is invalid
             if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
+                vPane.setVisible(false);
+                algorithmPane.getChildren().remove(runAlgorithm);
+                runAlgorithm.setVisible(false);
+                vPane.getChildren().remove(fileInfo);
+                algorithmList.getChildren().clear();
+                resetToggleOptions();
+                clearCachedSettings();
+                algorithmTable.getChildren().remove(algorithmTypes);
+                vPane.getChildren().remove(algorithmPane);
+
                 vPane.getChildren().remove(toggleButton);
                 getTextArea().setDisable(true);
                 getSaveButton().setDisable(true);
@@ -195,7 +207,6 @@ public final class AppUI extends UITemplate {
 
                 initializeAlgorithmTypes();
                 algorithmTable.getChildren().add(algorithmTypes);
-                //find a way to prevent auto selecting the last picked option
                 algorithmPane.getChildren().add(runAlgorithm);
                 runAlgorithm.setVisible(true);
                 vPane.getChildren().add(algorithmPane);
@@ -226,9 +237,12 @@ public final class AppUI extends UITemplate {
     @Override
     public void clear() {
         storedData = "";
-        chart.getData().clear();
+        scatterChart.getData().clear();
+        lineChart.getData().clear();
         fileInfo.setText("");
         numLabels = 0;
+        currentSettings = null;
+        runAlgorithm.setDisable(true);
 
     }
 
@@ -280,7 +294,7 @@ public final class AppUI extends UITemplate {
         algorithmGroups = new ArrayList<>();
         configButtons = new ArrayList<>();
         cachedSettings = new ArrayList<>();
-        
+
         Image settingsImage = new Image(getClass().getResourceAsStream(settingsiconPath));
         // set each radiobutton's toggle group to select only one at a time
         Label classificationTypeTitle = new Label(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()));
@@ -333,23 +347,47 @@ public final class AppUI extends UITemplate {
         runAlgorithm = new Button(applicationTemplate.manager.getPropertyValue(RUN_BUTTON_NAME.name()));
         runAlgorithm.setDisable(true);
 
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
-        chart = new LineChart<>(xAxis, yAxis);
-        chart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
-        chart.setMaxHeight((2 * appPane.getHeight()) / 3);
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
 
+        NumberAxis xAxis = new NumberAxis();
+        NumberAxis yAxis = new NumberAxis();
+        lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
+        lineChart.setLegendVisible(false);
+        lineChart.setCreateSymbols(false);
+        lineChart.setAnimated(false);
+        lineChart.setAlternativeRowFillVisible(false);
+        lineChart.setAlternativeColumnFillVisible(false);
+        lineChart.getXAxis().setVisible(true);
+        lineChart.getYAxis().setVisible(true);
+//        lineChart.getStylesheets().addAll(getClass().getResource("chart.css").toExternalForm());
+        lineChart.setId("line");
+
+        scatterChart = new ScatterChart<>(xAxis, yAxis);
+        scatterChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
+        scatterChart.setMaxHeight((2 * appPane.getHeight()) / 3);
+        scatterChart.setLegendVisible(false);
+        scatterChart.setAnimated(false);
+        scatterChart.getXAxis().setVisible(false);
+        scatterChart.getYAxis().setVisible(false);
+        scatterChart.setId("scatter");
         final RowConstraints row = new RowConstraints();
-        row.setPrefHeight(chart.getMaxHeight());
+        row.setPrefHeight(scatterChart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
         final ColumnConstraints chartColumn = new ColumnConstraints();
         chartColumn.setHgrow(Priority.ALWAYS);
         pane.getRowConstraints().add(row);
         pane.getColumnConstraints().addAll(textColumn, chartColumn);
 
+        scatterChart.prefWidthProperty().bind(lineChart.widthProperty());
+//        lineChart.minWidthProperty().bind(scatterChart.widthProperty());
+//        lineChart.maxWidthProperty().bind(scatterChart.widthProperty());
+
         pane.add(vPane, 0, 0);
-        pane.add(chart, 1, 0);
+        charts = new StackPane();
+        charts.getChildren().addAll(lineChart, scatterChart);
+        charts.setAlignment(Pos.TOP_LEFT);
+        pane.add(charts, 1, 0);
 
         appPane.getChildren().add(pane);
     }
@@ -368,6 +406,10 @@ public final class AppUI extends UITemplate {
 
     public String getStoredData() {
         return storedData;
+    }
+
+    public LineChart getLineChart() {
+        return lineChart;
     }
 
     public void setStoredData(String input) {
@@ -461,11 +503,11 @@ public final class AppUI extends UITemplate {
 //                err.show(applicationTemplate.manager.getPropertyValue(DATA_DISPLAY_FAIL_TITLE.name()), ex.getMessage());
 //           }
 //        });
-        chart.getData().addListener(new ListChangeListener() {
+        lineChart.getData().addListener(new ListChangeListener() {
 
             @Override
             public void onChanged(ListChangeListener.Change c) {
-                if (!chart.getData().isEmpty()) {
+                if (!lineChart.getData().isEmpty()) {
                     scrnshotButton.setDisable(false);
                 } else {
                     scrnshotButton.setDisable(true);
@@ -473,7 +515,7 @@ public final class AppUI extends UITemplate {
 
             }
         });
-        
+
         for (Object b : configButtons) {
             ((Button) b).setOnAction(handler -> {
                 algorithmConfigWindow = new Stage();
@@ -501,8 +543,8 @@ public final class AppUI extends UITemplate {
                     clustersField.setPromptText("1");
                     clustersField.setFocusTraversable(false);
                     content.add(clustersField, 1, 2);
-                    if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
-                        clustersField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getLabels());
+                    if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button) b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button) b))).getBtn())) {
+                        clustersField.setText("" + cachedSettings.get(configButtons.indexOf(((Button) b))).getLabels());
                     }
                 }
 
@@ -514,8 +556,8 @@ public final class AppUI extends UITemplate {
                 iterationsField.setPromptText("1000");
                 iterationsField.setFocusTraversable(false);
                 content.add(iterationsField, 1, 0);
-                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
-                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIterations());
+                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button) b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button) b))).getBtn())) {
+                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button) b))).getIterations());
                 }
                 intervalsField = new TextField();
                 intervalsField.setPrefWidth(65);
@@ -526,10 +568,10 @@ public final class AppUI extends UITemplate {
                 runOption = new CheckBox();
                 content.add(runOption, 1, 3);
 
-                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button)b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button)b))).getBtn())) {
-                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIterations());
-                    intervalsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button)b))).getIntervals());
-                    runOption.setSelected(cachedSettings.get(configButtons.indexOf(((Button)b))).isContinuousState());
+                if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button) b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button) b))).getBtn())) {
+                    iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button) b))).getIterations());
+                    intervalsField.setText("" + cachedSettings.get(configButtons.indexOf(((Button) b))).getIntervals());
+                    runOption.setSelected(cachedSettings.get(configButtons.indexOf(((Button) b))).isContinuousState());
                 }
 
                 currentSettings = new ConfigState();
@@ -567,30 +609,24 @@ public final class AppUI extends UITemplate {
                 currentSettings.setIterations(iterations);
                 currentSettings.setLabels(clusters);
                 currentSettings.setContinuousState(continuousState);
-                if(cachedSettings.size() < configButtons.size()){
-                    for(int i = 0; i< configButtons.size(); i++){
+                if (cachedSettings.size() < configButtons.size()) {
+                    for (int i = 0; i < configButtons.size(); i++) {
                         cachedSettings.add(null);
                     }
                 }
-                cachedSettings.set(configButtons.indexOf((Button)b),currentSettings);
+                cachedSettings.set(configButtons.indexOf((Button) b), currentSettings);
+                if (algorithmValue != null) {
+                    runAlgorithm.setDisable(false);
+                }
             });
         }
 
         for (Object group : getToggleGroups()) {
             ((ToggleGroup) group).selectedToggleProperty().addListener(listener -> {
-                if (((ToggleGroup) group).selectedToggleProperty().getValue() != null) {
+                toggleGroup = ((ToggleGroup) group);
+                algorithmValue = ((ToggleGroup) group).selectedToggleProperty().getValue();
+                if (algorithmValue != null && currentSettings != null) {
                     runAlgorithm.setDisable(false);
-                    runAlgorithm.setOnAction(e ->{
-                        if(currentSettings == null) currentSettings = new ConfigState();
-                        if(((RadioButton)((ToggleGroup) group).getSelectedToggle()).getId().equals("Random Classification")){
-                            ((AppData)applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getChart());
-                        }
-                        if(((RadioButton)((ToggleGroup) group).getSelectedToggle()).getId().equals("Random Clustering")){
-                            System.out.println("do nothing");
-                            //get settings
-                            //run randomclustering algorithm
-                        }
-                    });
                 }
             });
         }
@@ -599,9 +635,25 @@ public final class AppUI extends UITemplate {
 //
 //            });
 //        }
-        
-        
-        
+
+        runAlgorithm.setOnAction(e -> {
+            if (currentSettings == null) {
+                currentSettings = new ConfigState();
+            }
+            lineChart.getData().clear();
+            scatterChart.getData().clear();
+            if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Classification")) {
+                ((AppData) applicationTemplate.getDataComponent()).displayData();
+//                            runAlgorithm.setDisable(true);
+                ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getLineChart());
+//                            runAlgorithm.setDisable(false);
+            }
+            if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Clustering")) {
+                System.out.println("do nothing");
+                //get settings
+                //run randomclustering algorithm
+            }
+        });
 
     }
 
@@ -614,7 +666,7 @@ public final class AppUI extends UITemplate {
         labels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getLabels();
         fileInfo.setText(applicationTemplate.manager.getPropertyValue(INSTANCE_COUNT_INFO.name()) + ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumInstances() + NEW_LINE
                 + applicationTemplate.manager.getPropertyValue(LABEL_COUNT_INFO.name()) + numLabels + NEW_LINE
-                + applicationTemplate.manager.getPropertyValue(LABEL_NAME_INFO.name()) + NEW_LINE + TAB +"• " + String.join(NEW_LINE + TAB+ "• ", labels) + NEW_LINE
+                + applicationTemplate.manager.getPropertyValue(LABEL_NAME_INFO.name()) + NEW_LINE + TAB + "• " + String.join(NEW_LINE + TAB + "• ", labels) + NEW_LINE
                 + applicationTemplate.manager.getPropertyValue(SOURCE_INFO.name()) + dataSource);
     }
 
@@ -642,14 +694,10 @@ public final class AppUI extends UITemplate {
 //            if (dataSource == null) {
 //                dataSource = "";
 //            }
-            
+
             ((AppData) applicationTemplate.getDataComponent()).loadData(textArea.getText());
 
             setFileMetaData();
-            if (hasNewText) {
-                ((AppData) applicationTemplate.getDataComponent()).displayData();
-
-            }
             return true;
         } catch (InvalidDataNameException | ArrayIndexOutOfBoundsException error) {
             ErrorDialog err = (ErrorDialog) applicationTemplate.getDialog(Dialog.DialogType.ERROR);
@@ -722,7 +770,6 @@ public final class AppUI extends UITemplate {
         toggleButton.setText(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
         algorithmTable.getChildren().remove(algorithmTypes);
 
-//        if(algorithmTypes != null) algorithmTypes.getSelectionModel().clearSelection();
         vPane.getChildren().remove(algorithmPane);
     }
 
@@ -735,8 +782,12 @@ public final class AppUI extends UITemplate {
     private ArrayList<ToggleGroup> getToggleGroups() {
         return algorithmGroups;
     }
-    
-    private void clearCachedSettings(){
+
+    private void clearCachedSettings() {
         cachedSettings.clear();
+    }
+
+    public Button getRunButton() {
+        return runAlgorithm;
     }
 }
