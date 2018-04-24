@@ -346,7 +346,7 @@ public final class AppUI extends UITemplate {
 
         runAlgorithm = new Button(applicationTemplate.manager.getPropertyValue(RUN_BUTTON_NAME.name()));
         runAlgorithm.setDisable(true);
-
+        runAlgorithm.setStyle("-fx-background-color:#a9ff00;");
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
 
         NumberAxis xAxis = new NumberAxis();
@@ -507,11 +507,9 @@ public final class AppUI extends UITemplate {
 
             @Override
             public void onChanged(ListChangeListener.Change c) {
-                if (!lineChart.getData().isEmpty()) {
-                    scrnshotButton.setDisable(false);
-                } else {
+                if (lineChart.getData().isEmpty()) {
                     scrnshotButton.setDisable(true);
-                }
+                } 
 
             }
         });
@@ -789,5 +787,9 @@ public final class AppUI extends UITemplate {
 
     public Button getRunButton() {
         return runAlgorithm;
+    }
+    
+    public Button getScreenshotButton(){
+        return scrnshotButton;
     }
 }

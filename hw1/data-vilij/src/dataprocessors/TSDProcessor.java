@@ -33,6 +33,8 @@ import vilij.templates.ApplicationTemplate;
  */
 public final class TSDProcessor {
 
+    private RandomClassifier currentRandomClassifier;
+
     public static class InvalidDataNameException extends Exception {
 
         private static final String NAME_ERROR_MSG = "All data instance names must start with the @ character.";
@@ -165,14 +167,14 @@ public final class TSDProcessor {
     }
     
     public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
-        RandomClassifier test = new RandomClassifier(data, chart, applicationTemplate, settings);
-        Thread t = new Thread(test);
-            t.start();
+        if(currentRandomClassifier ==null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
+        else if(!currentRandomClassifier.isAlgorithmActive()) {
+            
+                    currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
+        }
         
-        //if continuous run, else not a continuous run: stop loop early, and don't run until user clicks next
-            
-            
-            
+        Thread t = new Thread(currentRandomClassifier);
+            t.start();
          
     }
 }
