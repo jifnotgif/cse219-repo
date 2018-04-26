@@ -75,6 +75,7 @@ public final class AppUI extends UITemplate {
     private LineChart<Number, Number> lineChart;
 //    private Button displayButton;  
     private Button toggleButton;
+
     private TextArea textArea;       // text area for new data input
     
     private boolean hasNewText;     // whether or not the text area has any new data since last display
@@ -805,4 +806,7 @@ public final class AppUI extends UITemplate {
         return hasNewText;
     }
     
+    public Button getToggleButton() {
+        return toggleButton;
+    }
 }

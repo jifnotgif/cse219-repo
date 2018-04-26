@@ -47,6 +47,7 @@ public class RandomClassifier extends Classifier {
     private int x2;
     private int y1;
     private int y2;
+    private int yBound;
 
     @Override
     public int getMaxIterations() {
@@ -77,6 +78,7 @@ public class RandomClassifier extends Classifier {
     @Override
     public void run() {
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
+        ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
             for (int i = 1; i <= maxIterations; i++) {
@@ -172,6 +174,7 @@ public class RandomClassifier extends Classifier {
             }
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
+        ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
         
     }
 
@@ -204,6 +207,7 @@ algorithmLine = new XYChart.Series<>();
 
         x1 = dataset.getMinX();
         x2 = dataset.getMaxX();
+        yBound = dataset.getMaxY();
         
         y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
         y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
@@ -214,8 +218,8 @@ algorithmLine = new XYChart.Series<>();
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
 //        double yLowerBound = dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
 
-        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(-100);
-        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(100);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(-yBound - 5);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yBound + 5);
 //        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setForceZeroInRange(false);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
 
