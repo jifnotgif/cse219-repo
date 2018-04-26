@@ -46,6 +46,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.ScatterChart;
@@ -121,6 +122,8 @@ public final class AppUI extends UITemplate {
     private CheckBox runOption;
     private Toggle algorithmValue;
     private ToggleGroup toggleGroup;
+    private NumberAxis xAxis;
+    private NumberAxis yAxis;
 
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
@@ -252,17 +255,15 @@ public final class AppUI extends UITemplate {
         vPane.setPrefHeight(applicationTemplate.getUIComponent().getPrimaryScene().getHeight());
         Label boxTitle = new Label(applicationTemplate.manager.getPropertyValue(TEXTBOX_TITLE.name()));
         boxTitle.setFont(Font.font(applicationTemplate.manager.getPropertyValue(FONT.name()), 18));
-
         textArea = new TextArea();
         textArea.setPrefWidth(300);
-        textArea.setPrefHeight(150);
+        textArea.setMinHeight(215);
 //        displayButton = new Button(applicationTemplate.manager.getPropertyValue(DISPLAY_NAME.name()));
 //        tickBox = new CheckBox(applicationTemplate.manager.getPropertyValue(READ_ONLY.name()));
         toggleButton = new Button(applicationTemplate.manager.getPropertyValue(DONE_BUTTON_NAME.name()));
 
 //        Region region = new Region();
 //        HBox.setHgrow(region, Priority.ALWAYS);
-        vPane.getChildren().add(toggleButton);
 
         fileInfo = new Text();
         fileInfo.setWrappingWidth(300);
@@ -278,9 +279,11 @@ public final class AppUI extends UITemplate {
 
         pane.setAlignment(Pos.BOTTOM_CENTER);
         vPane.getChildren().addAll(boxTitle, textArea);
-
+        vPane.getChildren().add(toggleButton);
+//        VBox.setVgrow(algorithmPane, Priority.ALWAYS);
+        vPane.setAlignment(Pos.TOP_LEFT);
         vPane.setVisible(false);
-
+        
         algorithmList = new VBox(10);
 
         classificationTypes = new VBox(10);
@@ -344,10 +347,10 @@ public final class AppUI extends UITemplate {
         runAlgorithm.setId("active");
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
 
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
+        xAxis = new NumberAxis();
+        yAxis = new NumberAxis();
         lineChart = new LineChart<>(xAxis, yAxis);
-        lineChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
+//        lineChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         lineChart.setLegendVisible(false);
         lineChart.setCreateSymbols(false);
         lineChart.setAnimated(false);
@@ -355,6 +358,7 @@ public final class AppUI extends UITemplate {
         lineChart.setAlternativeColumnFillVisible(false);
         lineChart.getXAxis().setVisible(true);
         lineChart.getYAxis().setVisible(true);
+        
 //        lineChart.getStylesheets().addAll(getClass().getResource("chart.css").toExternalForm());
         lineChart.setId("line");
 
@@ -363,16 +367,18 @@ public final class AppUI extends UITemplate {
         scatterChart.setMaxHeight((2 * appPane.getHeight()) / 3);
         scatterChart.setLegendVisible(false);
         scatterChart.setAnimated(false);
-        scatterChart.getXAxis().setVisible(false);
-        scatterChart.getYAxis().setVisible(false);
         scatterChart.setId("scatter");
+        lineChart.maxHeightProperty().bind(scatterChart.heightProperty());
         
-        final RowConstraints row = new RowConstraints();
-        row.setPrefHeight(scatterChart.getMaxHeight());
+        lineChart.prefWidthProperty().bind(scatterChart.widthProperty());
+        
+        
+//        final RowConstraints row = new RowConstraints();
+//        row.setPrefHeight(scatterChart.getMaxHeight());
         final ColumnConstraints textColumn = new ColumnConstraints();
         final ColumnConstraints chartColumn = new ColumnConstraints();
         chartColumn.setHgrow(Priority.ALWAYS);
-        pane.getRowConstraints().add(row);
+//        pane.getRowConstraints().add(row);
         pane.getColumnConstraints().addAll(textColumn, chartColumn);
 
 //        scatterChart.prefWidthProperty().bind(lineChart.widthProperty());
@@ -382,9 +388,8 @@ public final class AppUI extends UITemplate {
         pane.add(vPane, 0, 0);
         charts = new StackPane();
         charts.getChildren().addAll(lineChart, scatterChart);
-        charts.setAlignment(Pos.TOP_LEFT);
+        charts.setAlignment(Pos.TOP_CENTER);
         pane.add(charts, 1, 0);
-
         appPane.getChildren().add(pane);
     }
 
@@ -792,5 +797,11 @@ public final class AppUI extends UITemplate {
     
     public Button getScreenshotButton(){
         return scrnshotButton;
+    }
+    public NumberAxis getXAxis(){
+        return xAxis;
+    }
+    public NumberAxis getYAxis(){
+        return yAxis;
     }
 }

@@ -42,6 +42,10 @@ public class RandomClassifier extends Classifier {
     private List<Integer> output;
     private XYChart.Series<Number, Number> algorithmLine;
     private AtomicBoolean algorithmActiveState;
+    private int y1;
+    private int y2;
+    private int x1;
+    private int x2;
 
     @Override
     public int getMaxIterations() {
@@ -75,12 +79,10 @@ public class RandomClassifier extends Classifier {
         algorithmActiveState.set(true);
         if (tocontinue()) {
             for (int i = 1; i <= maxIterations && tocontinue(); i++) {
-                int xCoefficient = new Double(RAND.nextDouble() * 100).intValue();
-                int yCoefficient = new Double(RAND.nextDouble() * 100).intValue();
-                if (yCoefficient == 0) {
-                    yCoefficient = 1;
-                }
-                int constant = new Double(RAND.nextDouble() * 100).intValue();
+                int xCoefficient =  new Long(-1 * Math.round((2 * RAND.nextDouble() - 1) * 10)).intValue();
+                int yCoefficient = 10;
+                int constant     = RAND.nextInt(11);
+
                 // this is the real output of the classifier
                 output = Arrays.asList(xCoefficient, yCoefficient, constant);
 
@@ -92,7 +94,7 @@ public class RandomClassifier extends Classifier {
                     flush();
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
                     });
 
                 }
@@ -103,6 +105,7 @@ public class RandomClassifier extends Classifier {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        calculateLineOutput();
                     });
                     algorithmActiveState.set(false);
                     break;
@@ -116,12 +119,9 @@ public class RandomClassifier extends Classifier {
         } else {
             for (int i = 1; i <=  updateInterval; i++) {
                 counter.getAndIncrement();
-                int xCoefficient = new Double(RAND.nextDouble() * 100).intValue();
-                int yCoefficient = new Double(RAND.nextDouble() * 100).intValue();
-                if (yCoefficient == 0) {
-                    yCoefficient = 1;
-                }
-                int constant = new Double(RAND.nextDouble() * 100).intValue();
+                int xCoefficient =  new Long(-1 * Math.round((2 * RAND.nextDouble() - 1) * 10)).intValue();
+                int yCoefficient = 10;
+                int constant     = RAND.nextInt(11);
 
                 // this is the real output of the classifier
                 output = Arrays.asList(xCoefficient, yCoefficient, constant);
@@ -135,7 +135,7 @@ public class RandomClassifier extends Classifier {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
 
@@ -147,7 +147,7 @@ public class RandomClassifier extends Classifier {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
@@ -174,26 +174,34 @@ public class RandomClassifier extends Classifier {
         counter.addAndGet(updateInterval);
     }
 
-    private void calculateLineOutput(XYChart<Number, Number> chart) {
-        if (algorithmLine != null) {
-            chart.getData().remove(algorithmLine);
-        }
+    private void calculateLineOutput() {
+        if(algorithmLine != null) chart.getData().remove(algorithmLine);
         algorithmLine = new XYChart.Series<>();
         algorithmLine.setName("Classification Line");
 
-        int x1 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
-        int x2 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
-        if (output == null) {
-            return;
-        }
-        int y1 = (-output.get(2) - output.get(0) * x1) / output.get(1);
-        int y2 = (-output.get(2) - output.get(0) * x2) / output.get(1);
-
+        x1 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
+        x2 = (int) dataset.getLocations().values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
+        y1 = (int)(-output.get(2) - output.get(0) * x1) / output.get(1);
+        y2 = (int)(-output.get(2) - output.get(0) * x2) / output.get(1);
+        
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setLowerBound(x1 -1);
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setUpperBound(x2 + 1);
+         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
+//         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(true);
+         
+         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(0);
+         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(100);
+          ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
         algorithmLine.getData().add(new XYChart.Data<>(x1, y1));
         algorithmLine.getData().add(new XYChart.Data<>(x2, y2));
         chart.getData().add(algorithmLine);
 
         algorithmLine.getNode().setId("averageY");
+
+
+        algorithmLine.getData().get(0).setYValue(y1);
+        algorithmLine.getData().get(1).setYValue(y2);
+        
 //        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
 //            x.getNode().setVisible(false);
 //        }
@@ -202,4 +210,5 @@ public class RandomClassifier extends Classifier {
     public boolean isAlgorithmActive(){
         return algorithmActiveState.get();
     }
+    
 }
