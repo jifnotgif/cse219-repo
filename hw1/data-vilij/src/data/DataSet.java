@@ -65,6 +65,18 @@ public class DataSet {
     public Map<String, String> getLabels()     { return labels; }
 
     public Map<String, Point2D> getLocations() { return locations; }
+    
+    public int getMinX(){
+        return (int)locations.values().stream().mapToDouble(Point2D::getX).min().orElse(0.0);
+    }
+    
+    public int getMaxX(){
+        return (int) locations.values().stream().mapToDouble(Point2D::getX).max().orElse(0.0);
+    }
+    
+    public int getMaxY(){
+        return (int)locations.values().stream().mapToDouble(Point2D::getY).max().orElse(0.0);
+    }
 //
 //    public void updateLabel(String instanceName, String newlabel) {
 //        if (labels.get(instanceName) == null)

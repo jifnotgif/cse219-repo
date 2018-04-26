@@ -116,13 +116,13 @@ public class AppData implements DataComponent {
     public void saveData(Path dataFilePath) {
         try{
             String dataString =((AppUI)applicationTemplate.getUIComponent()).getStoredData();
-            if(dataString == null) {
+            if(dataString.equals("")) {
                 dataString = ((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText();
             }
             processor.processString(dataString);
-            FileWriter writer = new FileWriter(dataFilePath.toFile());
-            writer.write(dataString);
-            writer.close();
+            try (FileWriter writer = new FileWriter(dataFilePath.toFile())) {
+                writer.write(dataString);
+            }
         }
         catch(Exception e){
             ErrorDialog err = (ErrorDialog)applicationTemplate.getDialog(Dialog.DialogType.ERROR);

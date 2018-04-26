@@ -21,7 +21,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
@@ -32,37 +31,23 @@ import vilij.propertymanager.PropertyManager;
 import static java.io.File.separator;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
-import javafx.util.Callback;
 import static settings.AppPropertyTypes.*;
 import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
@@ -87,7 +72,7 @@ public final class AppUI extends UITemplate {
     private String settingsiconPath;
     private ScatterChart<Number, Number> scatterChart;               // the chart where data will be displayed
     private LineChart<Number, Number> lineChart;
-//    private Button displayButton;  // workspace button to display data on the chart
+//    private Button displayButton;  
     private Button toggleButton;
     private TextArea textArea;       // text area for new data input
     private boolean hasNewText;     // whether or not the text area has any new data since last display
@@ -121,6 +106,8 @@ public final class AppUI extends UITemplate {
     private CheckBox runOption;
     private Toggle algorithmValue;
     private ToggleGroup toggleGroup;
+    private NumberAxis xAxis;
+    private NumberAxis yAxis;
 
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
@@ -344,8 +331,9 @@ public final class AppUI extends UITemplate {
         runAlgorithm.setId("active");
         this.getPrimaryScene().getStylesheets().add(getClass().getClassLoader().getResource(applicationTemplate.manager.getPropertyValue(CSS_PATH.name())).toExternalForm());
 
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
+        xAxis = new NumberAxis();
+        yAxis = new NumberAxis();
+        
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         lineChart.setLegendVisible(false);
@@ -353,8 +341,9 @@ public final class AppUI extends UITemplate {
         lineChart.setAnimated(false);
         lineChart.setAlternativeRowFillVisible(false);
         lineChart.setAlternativeColumnFillVisible(false);
-        lineChart.getXAxis().setVisible(true);
-        lineChart.getYAxis().setVisible(true);
+        lineChart.getXAxis().setVisible(false);
+        lineChart.getYAxis().setVisible(false);
+        lineChart.setAnimated(false);
 //        lineChart.getStylesheets().addAll(getClass().getResource("chart.css").toExternalForm());
         lineChart.setId("line");
 
@@ -363,8 +352,8 @@ public final class AppUI extends UITemplate {
         scatterChart.setMaxHeight((2 * appPane.getHeight()) / 3);
         scatterChart.setLegendVisible(false);
         scatterChart.setAnimated(false);
-        scatterChart.getXAxis().setVisible(false);
-        scatterChart.getYAxis().setVisible(false);
+        scatterChart.getXAxis().setVisible(true);
+        scatterChart.getYAxis().setVisible(true);
         scatterChart.setId("scatter");
         
         final RowConstraints row = new RowConstraints();
@@ -633,8 +622,8 @@ public final class AppUI extends UITemplate {
         runAlgorithm.setOnAction(e -> {
             lineChart.getData().clear();
             scatterChart.getData().clear();
+            ((AppData) applicationTemplate.getDataComponent()).displayData();
             if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Classification")) {
-                ((AppData) applicationTemplate.getDataComponent()).displayData();
 //                            runAlgorithm.setDisable(true);
                 ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getLineChart());
 //                            runAlgorithm.setDisable(false);
@@ -793,4 +782,13 @@ public final class AppUI extends UITemplate {
     public Button getScreenshotButton(){
         return scrnshotButton;
     }
+    
+    public NumberAxis getXAxis(){
+        return xAxis;
+    }
+    
+    public NumberAxis getYAxis(){
+        return yAxis;
+    }
+    
 }
