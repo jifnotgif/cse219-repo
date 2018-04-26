@@ -111,7 +111,7 @@ public final class AppUI extends UITemplate {
     private ToggleGroup toggleGroup;
     private NumberAxis xAxis;
     private NumberAxis yAxis;
-
+    private Label   iterationLabel;
 
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
@@ -170,6 +170,7 @@ public final class AppUI extends UITemplate {
             if (!((AppActions) applicationTemplate.getActionComponent()).getFlag()) {
                 vPane.setVisible(false);
                 algorithmPane.getChildren().remove(runAlgorithm);
+                algorithmPane.getChildren().remove(iterationLabel);
                 runAlgorithm.setVisible(false);
                 vPane.getChildren().remove(fileInfo);
                 algorithmList.getChildren().clear();
@@ -191,6 +192,7 @@ public final class AppUI extends UITemplate {
                 initializeAlgorithmTypes();
                 algorithmTable.getChildren().add(algorithmTypes);
                 algorithmPane.getChildren().add(runAlgorithm);
+                algorithmPane.getChildren().add(iterationLabel);
                 runAlgorithm.setVisible(true);
                 vPane.getChildren().add(algorithmPane);
 
@@ -259,7 +261,7 @@ public final class AppUI extends UITemplate {
 
         algorithmPane = new VBox(10);
         algorithmTable = new VBox(10);
-
+        iterationLabel = new Label("Iteration number: ");
         Label listHeader = new Label(applicationTemplate.manager.getPropertyValue(ALGORITHM_TYPES_TITLE.name()));
         listHeader.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_LIST_ID.name()));
 
@@ -326,7 +328,7 @@ public final class AppUI extends UITemplate {
         algorithmGroups.add(clusteringGroup);
         clusteringTypes.getChildren().addAll(clusteringTypeTitle, clusteringOption1);
 
-        algorithmPane.getChildren().addAll(algorithmTable, algorithmList);
+        algorithmPane.getChildren().addAll(algorithmTable, algorithmList, iterationLabel);
         vPane.getChildren().add(algorithmPane);
 
         runAlgorithm = new Button(applicationTemplate.manager.getPropertyValue(RUN_BUTTON_NAME.name()));
@@ -789,6 +791,14 @@ public final class AppUI extends UITemplate {
     
     public NumberAxis getYAxis(){
         return yAxis;
+    }
+    
+    public Label getIterationLabel(){
+        return iterationLabel;
+    }
+    
+    public void setIterationLabelCount(int count){
+        iterationLabel.setText("Iteration number: " + count);
     }
     
     public boolean getHasNewText(){

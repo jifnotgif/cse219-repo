@@ -47,6 +47,8 @@ public class RandomClassifier extends Classifier {
     private int x2;
     private int y1;
     private int y2;
+    private volatile boolean shutdown = false;
+    
 
     @Override
     public int getMaxIterations() {
@@ -70,17 +72,18 @@ public class RandomClassifier extends Classifier {
         this.maxIterations = settings.getIterations();
         this.updateInterval = settings.getIntervals();
         this.tocontinue = new AtomicBoolean(settings.isContinuousState());
-        this.counter = new AtomicInteger(1);
+        this.counter = new AtomicInteger(0);
         this.algorithmActiveState = new AtomicBoolean(false);
-        initializeAlgorithmLine();
     }
 
     @Override
     public void run() {
+        while(!shutdown){
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
-            for (int i = 0; i <= maxIterations; i++) {
+            for (int i = 1; i <= maxIterations; i++) {
+                counter.getAndIncrement();
                 int xCoefficient = new Long(-1 * Math.round((2 * RAND.nextDouble() - 1) * 10)).intValue();
                 int yCoefficient = 10;
                 int constant = RAND.nextInt(11);
@@ -92,27 +95,29 @@ public class RandomClassifier extends Classifier {
                 // in the final project, such changes will be dynamically visible in the UI
 //                    System.out.println(output);
 //                    System.out.printf("Iteration number %d: ", i); //
-                    flush();
                 if (i % updateInterval == 0) {
-                    System.out.printf("Iteration number %d: ", i); //
-                    flush();
+//                    System.out.printf("Iteration number %d: ", i); //
+//                    flush();
                     Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
 
                     });
                 }
 
                 if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
-                    System.out.printf("Iteration number %d: ", i);
-                    flush();
+//                    System.out.printf("Iteration number %d: ", i);
+//                    flush();
 
                     Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
                     algorithmActiveState.set(false);
+                    counter.set(0);
                     break;
                 }
                 try {
@@ -136,29 +141,29 @@ public class RandomClassifier extends Classifier {
                 // in the final project, such changes will be dynamically visible in the UI
 //                    System.out.println(output);
                 if (counter.get() % updateInterval == 0) {
-                    System.out.printf("Iteration number %d: ", counter.get());
-                    flush();
+//                    System.out.printf("Iteration number %d: ", counter.get());
+//                    flush();
                     Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
-                        calculateLineOutput(chart);
-
+                        calculateLineOutput();
                     });
-
 //                        //update gui then set to true again
                 }
                 if (counter.get() > maxIterations * .6 && RAND.nextDouble() < 0.05) {
-                    System.out.printf("Iteration number %d: ", counter.get());
-                    flush();
+//                    System.out.printf("Iteration number %d: ", counter.get());
+//                    flush();
                     Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
-                        calculateLineOutput(chart);
+                        calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
 
                     });
                     algorithmActiveState.set(false);
-                    counter.set(1);
+                    counter.set(0);
                     break;
                 }
 
@@ -170,7 +175,14 @@ public class RandomClassifier extends Classifier {
             }
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
-
+        
+                  try {
+              Thread.sleep(1000);
+          } catch (InterruptedException e) {    
+              Thread.currentThread().interrupt();
+              return;
+          }
+        }
     }
 
     // for internal viewing only
@@ -187,32 +199,25 @@ public class RandomClassifier extends Classifier {
         counter.addAndGet(updateInterval);
     }
 
-    private void calculateLineOutput(XYChart<Number, Number> chart) {
-//        if (algorithmLine != null) {
-//            chart.getData().remove(algorithmLine);
-//        }
+    private void calculateLineOutput() {
+        if (algorithmLine != null) {
+            chart.getData().remove(algorithmLine);
+        }
 
 //        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setTickUnit(10);
 //        if (output == null) {
 //            return;
 //        }
-        y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
-        y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
 
-        algorithmLine.getData().get(0).setYValue(y1);
-        algorithmLine.getData().get(1).setYValue(y2);
-
-//        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
-//            x.getNode().setVisible(false);
-//        }
-    }
-
-    private void initializeAlgorithmLine() {
-        algorithmLine = new XYChart.Series<>();
+algorithmLine = new XYChart.Series<>();
         algorithmLine.setName("Classification Line");
 
         x1 = dataset.getMinX();
         x2 = dataset.getMaxX();
+        
+        y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
+        y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
+
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setLowerBound(x1 - 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setUpperBound(x2 + 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(false);
@@ -229,9 +234,17 @@ public class RandomClassifier extends Classifier {
         chart.getData().add(algorithmLine);
 
         algorithmLine.getNode().setId("algorithm");
+
+//        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
+//            x.getNode().setVisible(false);
+//        }
     }
 
     public boolean isAlgorithmActive() {
         return algorithmActiveState.get();
+    }
+    
+   public void shutdown() {
+        shutdown = true;
     }
 }

@@ -45,6 +45,7 @@ public final class TSDProcessor {
     }
     private DataSet              data;
     private Set<String>          labels;
+    private Set<Thread>          runningAlgorithms;
     private final String         NEW_LINE = "\n";
     private final String         NAME_SYMBOL ="@";
     private final String         TAB = "\t";
@@ -52,6 +53,7 @@ public final class TSDProcessor {
     
     public TSDProcessor(ApplicationTemplate applicationTemplate) {
         this.applicationTemplate = applicationTemplate;
+        this.runningAlgorithms = new HashSet<Thread>();
     }
 
     /**
@@ -141,6 +143,11 @@ public final class TSDProcessor {
 
     
     void clear() {
+//        if(isAlgorithmRunning()){
+//            for(Thread t : runningAlgorithms){
+//                
+//            }
+//        }
         if(data != null){
             data.getLocations().clear();
             data.getLabels().clear();
@@ -166,6 +173,7 @@ public final class TSDProcessor {
         return labels;
     }
     
+    //better way to implement by checking hashset
     public boolean isAlgorithmRunning(){
         if(currentRandomClassifier == null) return false;
         return currentRandomClassifier.isAlgorithmActive();
