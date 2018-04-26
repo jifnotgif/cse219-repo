@@ -166,8 +166,13 @@ public final class TSDProcessor {
         return labels;
     }
     
+    public boolean isAlgorithmRunning(){
+        if(currentRandomClassifier == null) return false;
+        return currentRandomClassifier.isAlgorithmActive();
+    }
+    
     public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
-        if(currentRandomClassifier ==null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
+        if(currentRandomClassifier == null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
         else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
         
         Thread t = new Thread(currentRandomClassifier);

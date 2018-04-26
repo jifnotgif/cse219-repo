@@ -45,8 +45,6 @@ public class RandomClassifier extends Classifier {
     private AtomicBoolean algorithmActiveState;
     private int x1;
     private int x2;
-    private int yLowerBound;
-    private double yUpperBound;
     private int y1;
     private int y2;
 
@@ -92,7 +90,7 @@ public class RandomClassifier extends Classifier {
 
                 // everything below is just for internal viewing of how the output is changing
                 // in the final project, such changes will be dynamically visible in the UI
-                    System.out.println(output);
+//                    System.out.println(output);
 //                    System.out.printf("Iteration number %d: ", i); //
                     flush();
                 if (i % updateInterval == 0) {
@@ -136,7 +134,7 @@ public class RandomClassifier extends Classifier {
 
                 // everything below is just for internal viewing of how the output is changing
                 // in the final project, such changes will be dynamically visible in the UI
-                    System.out.println(output);
+//                    System.out.println(output);
                 if (counter.get() % updateInterval == 0) {
                     System.out.printf("Iteration number %d: ", counter.get());
                     flush();
@@ -220,7 +218,6 @@ public class RandomClassifier extends Classifier {
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(false);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
 //        double yLowerBound = dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
-        yUpperBound = dataset.getMaxY();
 
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(-100);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(100);

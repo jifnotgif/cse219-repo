@@ -17,7 +17,7 @@ functionality within the main workspace. -->
         <!-- WARNING MESSAGES -->
         <property name="EXIT_TITLE" value="Exit Application"/>
         <property name="EXIT_WHILE_RUNNING_WARNING"
-                  value="An algorithm is running. If you exit now, all unsaved changes will be lost. Are you sure?"/>
+                  value="An algorithm is running. Are you sure you want to exit?"/>
 
         <!-- ERROR MESSAGES -->
         <property name="DEFAULT_ERROR_TITLE" value="Error"/>

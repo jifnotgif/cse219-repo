@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.scene.control.TextArea;
-import static settings.AppPropertyTypes.DATA_DISPLAY_FAIL_TITLE;
 import static settings.AppPropertyTypes.INPUT;
 import static settings.AppPropertyTypes.INPUT_TITLE;
 import static settings.AppPropertyTypes.LOADED_MANY_LINES_DESC_1;
@@ -37,10 +36,12 @@ public class AppData implements DataComponent {
     private ApplicationTemplate applicationTemplate;
     private ArrayList<String>   dataEntries;
     private final String        NEW_LINE = "\n";
+    private boolean             isDataLoaded;
 
     public AppData(ApplicationTemplate applicationTemplate) {
         this.processor = new TSDProcessor(applicationTemplate);
         this.applicationTemplate = applicationTemplate;
+        this.isDataLoaded = false;
     }
 
     @Override
@@ -48,11 +49,14 @@ public class AppData implements DataComponent {
         try{
             clear();
             if(dataEntries != null && !dataEntries.isEmpty()) resetData();
+            
+            isDataLoaded = true;
+            
             AtomicInteger index = new AtomicInteger(0);
             TextArea textbox = ((AppUI)applicationTemplate.getUIComponent()).getTextArea();
             String data = new String(Files.readAllBytes(dataFilePath));
             processor.processString(data);
-            ((AppUI)applicationTemplate.getUIComponent()).setStoredData(data);
+//            ((AppUI)applicationTemplate.getUIComponent()).setStoredData(data);
             
             int len = data.split(NEW_LINE).length;
             dataEntries = new ArrayList<>(Arrays.asList(data.split(NEW_LINE)));
@@ -115,13 +119,12 @@ public class AppData implements DataComponent {
     @Override
     public void saveData(Path dataFilePath) {
         try{
-            String dataString =((AppUI)applicationTemplate.getUIComponent()).getStoredData();
-            if(dataString.equals("")) {
-                dataString = ((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText();
-            }
-            processor.processString(dataString);
+//            String dataString =((AppUI)applicationTemplate.getUIComponent()).getStoredData();
+//            if(dataString.equals("")) {
+//                dataString = ((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText();
+//            }
             try (FileWriter writer = new FileWriter(dataFilePath.toFile())) {
-                writer.write(dataString);
+                writer.write(((AppUI)applicationTemplate.getUIComponent()).getTextArea().getText());
             }
         }
         catch(Exception e){
@@ -152,6 +155,10 @@ public class AppData implements DataComponent {
     
     public void resetData(){
         dataEntries.clear();
+    }
+    
+    public boolean isDataLoaded(){
+        return isDataLoaded;
     }
     
 }

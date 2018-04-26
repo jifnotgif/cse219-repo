@@ -70,13 +70,16 @@ public final class AppUI extends UITemplate {
     private Button scrnshotButton; // toolbar button to take a screenshot of the data
     private String scrnshoticonPath;
     private String settingsiconPath;
+    
     private ScatterChart<Number, Number> scatterChart;               // the chart where data will be displayed
     private LineChart<Number, Number> lineChart;
 //    private Button displayButton;  
     private Button toggleButton;
     private TextArea textArea;       // text area for new data input
+    
     private boolean hasNewText;     // whether or not the text area has any new data since last display
-    private String storedData;
+    
+//    private String storedData;
     private VBox vPane;
     private VBox classificationTypes;
     private VBox clusteringTypes;
@@ -216,7 +219,7 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void clear() {
-        storedData = "";
+//        storedData = "";
         scatterChart.getData().clear();
         lineChart.getData().clear();
         fileInfo.setText("");
@@ -389,17 +392,17 @@ public final class AppUI extends UITemplate {
         return vPane;
     }
 
-    public String getStoredData() {
-        return storedData;
-    }
+//    public String getStoredData() {
+//        return storedData;
+//    }
 
     public LineChart getLineChart() {
         return lineChart;
     }
 
-    public void setStoredData(String input) {
-        storedData = input;
-    }
+//    public void setStoredData(String input) {
+//        storedData = input;
+//    }
 
     private void setWorkspaceActions() {
         newButton.setDisable(false);
@@ -409,17 +412,20 @@ public final class AppUI extends UITemplate {
             if (!textArea.getText().isEmpty()) {
 //                newButton.setDisable(false);
                 saveButton.setDisable(false);
+                hasNewText = true;
             } else {
 //                newButton.setDisable(true);
                 saveButton.setDisable(true);
-            }
-
-            if (textArea.getText().equals(storedData)) {
                 hasNewText = false;
-                saveButton.setDisable(true);
-            } else {
-                hasNewText = true;
             }
+/*            storedData usage: if user is allowed to edit data loaded into program     */
+
+//            if (textArea.getText().equals(storedData)) {
+//                hasNewText = false;
+//                saveButton.setDisable(true);
+//            } else {
+//                hasNewText = true;
+//            }
 
         });
 
@@ -564,7 +570,8 @@ public final class AppUI extends UITemplate {
                 Scene subscene = new Scene(mainPane);
                 algorithmConfigWindow.setScene(subscene);
                 algorithmConfigWindow.showAndWait();
-                //Saving the user's configuration settings
+                
+                /* Initializing User Config Settings */
                 Integer clusters;
                 Integer intervals;
                 Integer iterations;
@@ -613,23 +620,16 @@ public final class AppUI extends UITemplate {
                 }
             });
         }
-//        while (algorithmConfigWindow != null) {
-//            algorithmConfigWindow.setOnCloseRequest(value -> {
-//
-//            });
-//        }
 
         runAlgorithm.setOnAction(e -> {
             lineChart.getData().clear();
             scatterChart.getData().clear();
             ((AppData) applicationTemplate.getDataComponent()).displayData();
             if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Classification")) {
-//                            runAlgorithm.setDisable(true);
                 ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getLineChart());
-//                            runAlgorithm.setDisable(false);
             }
             if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Clustering")) {
-                System.out.println("do nothing");
+//                System.out.println("do nothing");
                 //get settings
                 //run randomclustering algorithm
             }
@@ -789,6 +789,10 @@ public final class AppUI extends UITemplate {
     
     public NumberAxis getYAxis(){
         return yAxis;
+    }
+    
+    public boolean getHasNewText(){
+        return hasNewText;
     }
     
 }

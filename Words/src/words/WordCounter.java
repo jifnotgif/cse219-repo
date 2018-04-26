@@ -1,21 +1,32 @@
 package words;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class WordCounter {
     private final List<CountedWord> words;
+    private final HashMap<Word,Integer> wordmap;
 
     WordCounter() {
-	words = new LinkedList<>();
+	words = new ArrayList<>();
+        wordmap = new HashMap<>();
     }
     
     private CountedWord findWord(Word w) {
+        
         for(int i = 0; i < words.size(); i++) {
             CountedWord cw = words.get(i);
-            if(cw.getWord().equals(w))
-                return cw;
+//            wordmap.put(cw, wordmap.getOrDefault(cw, 0) + 1);
+//            if(cw.getWord().equals(w))
+//                return cw;
+        
+//    
+                if(wordmap.containsKey(w)){
+                    return cw;
+                }
         }
+        
         return null;
     }
 
@@ -23,7 +34,8 @@ public class WordCounter {
         CountedWord cw = findWord(w);
 	if(cw == null) {
 	    cw = new CountedWord(w);
-            words.add(cw);
+            wordmap.put(w, getCount(w));
+//           wordmap.put(cw, wordmap.get(cw) + 1);
         }
 	cw.tally();
     }
@@ -33,7 +45,7 @@ public class WordCounter {
 	if(cw == null)
 	    return(0);
 	else
-	    return(cw.getCount());
+	    return(wordmap.get(w));
     }
 
     int numWords() {
