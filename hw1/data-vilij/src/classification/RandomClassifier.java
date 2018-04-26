@@ -47,8 +47,6 @@ public class RandomClassifier extends Classifier {
     private int x2;
     private int y1;
     private int y2;
-    private volatile boolean shutdown = false;
-    
 
     @Override
     public int getMaxIterations() {
@@ -78,7 +76,6 @@ public class RandomClassifier extends Classifier {
 
     @Override
     public void run() {
-        while(!shutdown){
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
@@ -176,13 +173,6 @@ public class RandomClassifier extends Classifier {
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
         
-                  try {
-              Thread.sleep(1000);
-          } catch (InterruptedException e) {    
-              Thread.currentThread().interrupt();
-              return;
-          }
-        }
     }
 
     // for internal viewing only
@@ -203,12 +193,12 @@ public class RandomClassifier extends Classifier {
         if (algorithmLine != null) {
             chart.getData().remove(algorithmLine);
         }
-
+        
 //        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setTickUnit(10);
 //        if (output == null) {
 //            return;
 //        }
-
+        
 algorithmLine = new XYChart.Series<>();
         algorithmLine.setName("Classification Line");
 
@@ -217,7 +207,7 @@ algorithmLine = new XYChart.Series<>();
         
         y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
         y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
-
+        
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setLowerBound(x1 - 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setUpperBound(x2 + 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(false);
@@ -234,7 +224,7 @@ algorithmLine = new XYChart.Series<>();
         chart.getData().add(algorithmLine);
 
         algorithmLine.getNode().setId("algorithm");
-
+        
 //        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
 //            x.getNode().setVisible(false);
 //        }
@@ -244,7 +234,5 @@ algorithmLine = new XYChart.Series<>();
         return algorithmActiveState.get();
     }
     
-   public void shutdown() {
-        shutdown = true;
-    }
 }
+
