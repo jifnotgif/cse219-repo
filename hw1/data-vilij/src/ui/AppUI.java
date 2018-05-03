@@ -311,23 +311,37 @@ public final class AppUI extends UITemplate {
         Label clusteringTypeTitle = new Label(applicationTemplate.manager.getPropertyValue(CLUSTERING.name()));
         clusteringTypeTitle.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_TITLE_ID.name()));
 
-        Button clusteringSettings1 = new Button();
-        clusteringSettings1.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
-        clusteringSettings1.setId(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()));
-        clusteringSettings1.setGraphic(new ImageView(settingsImage));
-        configButtons.add(clusteringSettings1);
+        Button randomClusterSettings = new Button();
+        randomClusterSettings.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
+        randomClusterSettings.setId(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()));
+        randomClusterSettings.setGraphic(new ImageView(settingsImage));
+        configButtons.add(randomClusterSettings);
         HBox clusteringOption1 = new HBox();
         clusteringOption1.setAlignment(Pos.CENTER_LEFT);
         RadioButton clusteringType1 = new RadioButton(applicationTemplate.manager.getPropertyValue(CLUSTERING_OPTION_ONE.name()));
         clusteringType1.setId("Random Clustering");
 
+        Button kClustererSettings = new Button();
+        kClustererSettings.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
+        kClustererSettings.setId(applicationTemplate.manager.getPropertyValue(CLUSTERING_ID.name()));
+        kClustererSettings.setGraphic(new ImageView(settingsImage));
+        configButtons.add(kClustererSettings);
+        HBox clusteringOption2 = new HBox();
+        clusteringOption2.setAlignment(Pos.CENTER_LEFT);
+        RadioButton clusteringType2 = new RadioButton("K-Means Clustering");
+        clusteringType2.setId("K-Means Clustering");
+
         clusteringGroup = new ToggleGroup();
         clusteringType1.setToggleGroup(clusteringGroup);
         clusteringOption1.getChildren().add(clusteringType1);
-        clusteringOption1.getChildren().add(clusteringSettings1);
+        clusteringOption1.getChildren().add(randomClusterSettings);
+        
+        clusteringType2.setToggleGroup(clusteringGroup);
+        clusteringOption2.getChildren().add(clusteringType2);
+        clusteringOption2.getChildren().add(kClustererSettings);
 
         algorithmGroups.add(clusteringGroup);
-        clusteringTypes.getChildren().addAll(clusteringTypeTitle, clusteringOption1);
+        clusteringTypes.getChildren().addAll(clusteringTypeTitle, clusteringOption1, clusteringOption2);
 
         algorithmPane.getChildren().addAll(algorithmTable, algorithmList, iterationLabel);
         vPane.getChildren().add(algorithmPane);
@@ -356,7 +370,7 @@ public final class AppUI extends UITemplate {
         scatterChart = new ScatterChart<>(xAxis, yAxis);
         scatterChart.setTitle(applicationTemplate.manager.getPropertyValue(CHART_TITLE.name()));
         scatterChart.setMaxHeight((2 * appPane.getHeight()) / 3);
-        scatterChart.setLegendVisible(false);
+//        scatterChart.setLegendVisible(false);
         scatterChart.setAnimated(false);
         scatterChart.getXAxis().setVisible(true);
         scatterChart.getYAxis().setVisible(true);
@@ -532,7 +546,7 @@ public final class AppUI extends UITemplate {
 
                     clustersField = new TextField();
                     clustersField.setPrefWidth(65);
-                    clustersField.setPromptText("1");
+                    clustersField.setPromptText("2");
                     clustersField.setFocusTraversable(false);
                     content.add(clustersField, 1, 2);
                     if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(((Button) b))) != null && ((Button) b).equals(cachedSettings.get(configButtons.indexOf(((Button) b))).getBtn())) {
@@ -582,7 +596,7 @@ public final class AppUI extends UITemplate {
                 if (clustersField == null) {
                     clusters = 0;
                 } else if (clustersField.textProperty().get().equals("") || Integer.parseInt(clustersField.textProperty().get()) <= 0) {
-                    clusters = 1;
+                    clusters = 2;
                 } else {
                     clusters = Integer.parseInt(clustersField.textProperty().get());
                 }
@@ -632,9 +646,10 @@ public final class AppUI extends UITemplate {
                 ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getLineChart());
             }
             if (((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("Random Clustering")) {
-//                System.out.println("do nothing");
-                //get settings
-                //run randomclustering algorithm
+                ((AppData) applicationTemplate.getDataComponent()).getProcessor().runRandomClusteringAlgorithm(currentSettings);
+            }
+            if(((RadioButton) (toggleGroup).getSelectedToggle()).getId().equals("K-Means Clustering")){
+                
             }
         });
 

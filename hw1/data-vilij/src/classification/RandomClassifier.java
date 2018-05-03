@@ -3,19 +3,14 @@ package classification;
 import algorithms.Classifier;
 import data.DataSet;
 
-import java.io.IOException;
 import static java.lang.Thread.sleep;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.application.Platform;
-import javafx.geometry.Point2D;
-import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import static settings.AppPropertyTypes.CSS_PATH;
 import ui.AppUI;
 import ui.ConfigState;
 import vilij.templates.ApplicationTemplate;
@@ -47,7 +42,8 @@ public class RandomClassifier extends Classifier {
     private int x2;
     private int y1;
     private int y2;
-    private int yBound;
+    private int yMinBound;
+    private int yMaxBound;
 
     @Override
     public int getMaxIterations() {
@@ -202,12 +198,13 @@ public class RandomClassifier extends Classifier {
 //            return;
 //        }
         
-algorithmLine = new XYChart.Series<>();
+        algorithmLine = new XYChart.Series<>();
         algorithmLine.setName("Classification Line");
 
         x1 = dataset.getMinX();
         x2 = dataset.getMaxX();
-        yBound = dataset.getMaxY();
+        yMinBound = dataset.getMinY() -5;
+        yMaxBound = dataset.getMaxY()+ 5;
         
         y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
         y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
@@ -218,8 +215,8 @@ algorithmLine = new XYChart.Series<>();
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
 //        double yLowerBound = dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
 
-        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(-yBound - 5);
-        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yBound + 5);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(yMinBound);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yMaxBound);
 //        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setForceZeroInRange(false);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
 

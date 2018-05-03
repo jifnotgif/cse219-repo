@@ -2,6 +2,8 @@ package dataprocessors;
 
 import algorithms.Algorithm;
 import classification.RandomClassifier;
+import clustering.KMeansClusterer;
+import clustering.RandomClusterer;
 import data.DataSet;
 import static java.lang.Thread.sleep;
 import javafx.geometry.Point2D;
@@ -34,6 +36,8 @@ import vilij.templates.ApplicationTemplate;
 public final class TSDProcessor {
 
     private RandomClassifier currentRandomClassifier;
+    private RandomClusterer currentRandomClusterer;
+    private KMeansClusterer currentKMeansClusterer;
 
     public static class InvalidDataNameException extends Exception {
 
@@ -186,6 +190,22 @@ public final class TSDProcessor {
         Thread t = new Thread(currentRandomClassifier);
         t.start();
          
+    }
+    
+    public void runRandomClusteringAlgorithm(ConfigState settings){
+        if(currentRandomClusterer == null) currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+        else if(!currentRandomClusterer.isAlgorithmActive()) currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+        
+        Thread t = new Thread(currentRandomClusterer);
+        t.start();
+    }
+    
+    public void runKMeansClusteringAlgorithm(ConfigState settings){
+        if(currentKMeansClusterer == null) currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
+        else if(!currentKMeansClusterer.isAlgorithmActive()) currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
+        
+        Thread t = new Thread(currentKMeansClusterer);
+        t.start();
     }
 }
     

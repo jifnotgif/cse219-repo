@@ -61,6 +61,7 @@ public class DataSet {
         
         
     }
+    
 
     public Map<String, String> getLabels()     { return labels; }
 
@@ -72,6 +73,11 @@ public class DataSet {
     
     public int getMaxX(){
         return (int) locations.values().stream().mapToDouble(Point2D::getX).max().orElse(0.0);
+    }
+    
+
+    public int getMinY(){
+        return (int)locations.values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
     }
     
     public int getMaxY(){
