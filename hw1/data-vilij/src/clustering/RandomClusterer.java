@@ -44,7 +44,6 @@ public class RandomClusterer extends Clusterer{
     public RandomClusterer(ConfigState settings, DataSet dataset, ApplicationTemplate ui){
         super(settings);
         this.dataset = dataset;
-//        this.chart = chart;
         this.applicationTemplate = ui;
         this.maxIterations = settings.getIterations();
         this.updateInterval = settings.getIntervals();
@@ -110,7 +109,7 @@ public class RandomClusterer extends Clusterer{
                     });
                     
                     counter.set(0);
-
+  
                     ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
 
                     algorithmActiveState.set(false);
@@ -147,11 +146,10 @@ public class RandomClusterer extends Clusterer{
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
-                        
                         setNewLabels();
                     });
                     
-                    counter.set(0);
+                        counter.set(0);
                     ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
 
                     algorithmActiveState.set(false);
@@ -165,7 +163,6 @@ public class RandomClusterer extends Clusterer{
             }
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
-        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
             
     }

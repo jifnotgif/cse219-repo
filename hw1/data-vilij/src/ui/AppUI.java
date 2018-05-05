@@ -682,9 +682,8 @@ public final class AppUI extends UITemplate {
                 ((AppData) applicationTemplate.getDataComponent()).getProcessor().runRandomClusteringAlgorithm(currentSettings);
             }
             if(((RadioButton) (currentAlgorithmTypeSelection)).getId().equals("K-Means Clustering")){
-                
+                ((AppData) applicationTemplate.getDataComponent()).getProcessor().runKMeansClusteringAlgorithm(currentSettings);
             }
-            returnButton.setDisable(false);
         });
         
         returnButton.setOnAction(listener ->{

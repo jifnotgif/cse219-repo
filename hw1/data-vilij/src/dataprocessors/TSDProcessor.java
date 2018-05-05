@@ -38,6 +38,7 @@ public final class TSDProcessor {
     private RandomClassifier currentRandomClassifier;
     private RandomClusterer currentRandomClusterer;
     private KMeansClusterer currentKMeansClusterer;
+    private Thread t;
 
     public static class InvalidDataNameException extends Exception {
 
@@ -187,7 +188,7 @@ public final class TSDProcessor {
     
     public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
         if(currentRandomClassifier == null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
-//        else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
+        else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
         
         Thread t = new Thread(currentRandomClassifier);
         t.start();
@@ -201,9 +202,9 @@ public final class TSDProcessor {
             currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
             
         }
-//        else if(!currentRandomClusterer.isAlgorithmActive()) {
-//            currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
-//        }
+        else if(!currentRandomClusterer.isAlgorithmActive()) {
+            currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+        }
         Thread t = new Thread(currentRandomClusterer);
         t.start();
         this.algorithmIsRunning = t.isAlive();
@@ -211,11 +212,31 @@ public final class TSDProcessor {
     }
     
     public void runKMeansClusteringAlgorithm(ConfigState settings){
-        if(currentKMeansClusterer == null) currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
-        else if(!currentKMeansClusterer.isAlgorithmActive()) currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
+        if(currentKMeansClusterer == null) {
+            currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
+            t = new Thread(currentKMeansClusterer);
+
+            t.start();
+            this.algorithmIsRunning = t.isAlive();
+        }
+        else if(!currentKMeansClusterer.isAlgorithmActive()) {
+            currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
+            t = new Thread(currentKMeansClusterer);
+            t.start();
+            this.algorithmIsRunning = t.isAlive();
+        }
+        else{
+            synchronized(t){
+                t.notify();
+            }
+            this.algorithmIsRunning = t.isAlive();
         
-        Thread t = new Thread(currentKMeansClusterer);
-        t.start();
+
+//            while(t.isAlive()){
+//                if(t.getState().equals(Thread.State.WAITING))  t.notify();
+//            }
+            }
+        
     }
     public boolean getAlgorithmIsRunning(){
         return this.algorithmIsRunning;

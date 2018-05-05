@@ -99,6 +99,7 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
                         calculateLineOutput();
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(true);
 
                     });
                 }
@@ -149,6 +150,7 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
                         calculateLineOutput();
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
 //                        //update gui then set to true again
                 }
@@ -160,7 +162,6 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
                         calculateLineOutput();
-                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
 
                     });
