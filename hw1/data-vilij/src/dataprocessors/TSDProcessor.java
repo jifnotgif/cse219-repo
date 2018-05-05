@@ -53,11 +53,13 @@ public final class TSDProcessor {
     private final String         NEW_LINE = "\n";
     private final String         NAME_SYMBOL ="@";
     private final String         TAB = "\t";
+    private boolean              algorithmIsRunning;
     ApplicationTemplate applicationTemplate;
     
     public TSDProcessor(ApplicationTemplate applicationTemplate) {
         this.applicationTemplate = applicationTemplate;
-        this.runningAlgorithms = new HashSet<Thread>();
+//        this.runningAlgorithms = new HashSet<Thread>();
+        this.algorithmIsRunning = false;
     }
 
     /**
@@ -178,26 +180,34 @@ public final class TSDProcessor {
     }
     
     //better way to implement by checking hashset
-    public boolean isAlgorithmRunning(){
-        if(currentRandomClassifier == null) return false;
-        return currentRandomClassifier.isAlgorithmActive();
-    }
+//    public boolean isAlgorithmRunning(){
+//        if(currentRandomClassifier == null) return false;
+//        return currentRandomClassifier.isAlgorithmActive();
+//    }
     
     public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
         if(currentRandomClassifier == null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
-        else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
+//        else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
         
         Thread t = new Thread(currentRandomClassifier);
         t.start();
+        this.algorithmIsRunning = t.isAlive();
          
     }
     
     public void runRandomClusteringAlgorithm(ConfigState settings){
-        if(currentRandomClusterer == null) currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
-        else if(!currentRandomClusterer.isAlgorithmActive()) currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
         
+        if(currentRandomClusterer == null) {
+            currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+            
+        }
+//        else if(!currentRandomClusterer.isAlgorithmActive()) {
+//            currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+//        }
         Thread t = new Thread(currentRandomClusterer);
         t.start();
+        this.algorithmIsRunning = t.isAlive();
+        
     }
     
     public void runKMeansClusteringAlgorithm(ConfigState settings){
@@ -207,6 +217,16 @@ public final class TSDProcessor {
         Thread t = new Thread(currentKMeansClusterer);
         t.start();
     }
+    public boolean getAlgorithmIsRunning(){
+        return this.algorithmIsRunning;
+    }
+    
+    public void setAlgorithmIsRunning(boolean newState){
+        this.algorithmIsRunning = newState;
+    }
+    // create a method to set algorithm running state
+    // call the method inside the algorithm classes
+    // to change the state to false
 }
     
     

@@ -9,9 +9,12 @@ package clustering;
 import static java.lang.Thread.sleep;
 import algorithms.Clusterer;
 import data.DataSet;
+import dataprocessors.AppData;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javafx.application.Platform;
 import javafx.scene.chart.XYChart;
 import ui.AppUI;
 import ui.ConfigState;
@@ -36,6 +39,7 @@ public class RandomClusterer extends Clusterer{
     private final int updateInterval;
     private final AtomicBoolean algorithmActiveState;
     private final AtomicBoolean tocontinue;
+    private ArrayList<String> labels;
     
     public RandomClusterer(ConfigState settings, DataSet dataset, ApplicationTemplate ui){
         super(settings);
@@ -47,6 +51,8 @@ public class RandomClusterer extends Clusterer{
         this.tocontinue = new AtomicBoolean(settings.isContinuousState());
         this.counter = new AtomicInteger(0);
         this.algorithmActiveState = new AtomicBoolean(false);   
+        intializeLabels();
+        setChartBounds();
     }
     @Override
     public int getMaxIterations() {
@@ -84,8 +90,26 @@ public class RandomClusterer extends Clusterer{
         algorithmActiveState.set(true);
         if (tocontinue()) {
             for (int i = 1; i <= maxIterations; i++) {
+                counter.getAndIncrement();
+                if (i % updateInterval == 0) {
+                    Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
+                        setNewLabels();
+                    });
+                }
                 
                 
+                if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
+                    Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                    });
+                    
+                    counter.set(0);
+                    break;
+                }
                 try {
                     sleep(50);
                 } catch (InterruptedException e) {
@@ -97,6 +121,32 @@ public class RandomClusterer extends Clusterer{
         
         } else {
             for (int i = 0; i <= updateInterval; i++) {
+                counter.getAndIncrement();
+                if (counter.get() % updateInterval == 0) {
+                    Platform.runLater(() -> {
+                        
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
+                        
+                        setNewLabels();
+                    });
+                }
+                
+                
+                if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
+                    Platform.runLater(() -> {
+                        ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        
+                        setNewLabels();
+                    });
+                    
+                    counter.set(0);
+                    break;
+                }
                 try {
                     sleep(50);
                 } catch (InterruptedException e) {
@@ -106,9 +156,49 @@ public class RandomClusterer extends Clusterer{
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
+        ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+        algorithmActiveState.set(false);
         
             
     }
+    
+    public void setNewLabels(){
+        
+        for(String instance : dataset.getLabels().keySet()){
+            Random rand = new Random();
+            int labelNum = rand.nextInt(this.getNumberOfClusters());
             
+            dataset.getLabels().put(instance, labels.get(labelNum));
+        }
+        ((AppUI)applicationTemplate.getUIComponent()).getChart().getData().clear();
+        ((AppData)applicationTemplate.getDataComponent()).displayData();
+    }
+
+    private void intializeLabels() {
+        labels = new ArrayList<>();
+        for(int i = 1; i <= this.getNumberOfClusters(); i++){
+            labels.add("" + i);
+        }
+        
+        
+    }
+        
+    private void setChartBounds(){
+        
+        int x1 = dataset.getMinX();
+        int x2 = dataset.getMaxX();
+        int yMinBound = dataset.getMinY() -5;
+        int yMaxBound = dataset.getMaxY()+ 5;
+        
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setLowerBound(x1 - 1);
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setUpperBound(x2 + 1);
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(false);
+        ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
+        
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(yMinBound);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yMaxBound);
+        ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
+        
+    }
     
 }

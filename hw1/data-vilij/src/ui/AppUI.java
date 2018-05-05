@@ -194,6 +194,7 @@ public final class AppUI extends UITemplate {
                 algorithmTable.getChildren().add(algorithmTypes);
                 algorithmPane.getChildren().add(runAlgorithm);
                 algorithmPane.getChildren().add(iterationLabel);
+                runAlgorithm.setId("active");
                 runAlgorithm.setVisible(true);
                 vPane.getChildren().add(algorithmPane);
 
@@ -362,8 +363,11 @@ public final class AppUI extends UITemplate {
         lineChart.setAlternativeRowFillVisible(false);
         lineChart.setAlternativeColumnFillVisible(false);
         lineChart.getXAxis().setVisible(false);
+        lineChart.getXAxis().setAutoRanging(false);
         lineChart.getYAxis().setVisible(false);
-        lineChart.setAnimated(false);
+        lineChart.getYAxis().setAutoRanging(false);
+        
+//        lineChart.setVisible(false);
 //        lineChart.getStylesheets().addAll(getClass().getResource("chart.css").toExternalForm());
         lineChart.setId("line");
 
@@ -622,7 +626,7 @@ public final class AppUI extends UITemplate {
                     }
                 }
                 cachedSettings.set(configButtons.indexOf((Button) b), currentSettings);
-                if (algorithmValue != null) {
+                if (algorithmValue != null && !((AppData)applicationTemplate.getDataComponent()).getProcessor().getAlgorithmIsRunning()) {
                     runAlgorithm.setDisable(false);
                 }
             });
@@ -632,7 +636,8 @@ public final class AppUI extends UITemplate {
             ((ToggleGroup) group).selectedToggleProperty().addListener(listener -> {
                 toggleGroup = ((ToggleGroup) group);
                 algorithmValue = ((ToggleGroup) group).selectedToggleProperty().getValue();
-                if (algorithmValue != null && currentSettings != null) {
+                //check for current settings is applied to appropriate toggle option
+                if (algorithmValue != null && currentSettings != null && !((AppData)applicationTemplate.getDataComponent()).getProcessor().getAlgorithmIsRunning()) {
                     runAlgorithm.setDisable(false);
                 }
             });

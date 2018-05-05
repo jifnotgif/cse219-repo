@@ -2,6 +2,7 @@ package classification;
 
 import algorithms.Classifier;
 import data.DataSet;
+import dataprocessors.AppData;
 
 import static java.lang.Thread.sleep;
 import java.util.Arrays;
@@ -111,7 +112,6 @@ public class RandomClassifier extends Classifier {
                         calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                     });
-                    algorithmActiveState.set(false);
                     counter.set(0);
                     break;
                 }
@@ -157,7 +157,6 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
 
                     });
-                    algorithmActiveState.set(false);
                     counter.set(0);
                     break;
                 }
@@ -171,6 +170,9 @@ public class RandomClassifier extends Classifier {
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
+        ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+         algorithmActiveState.set(false);
+        
         
     }
 

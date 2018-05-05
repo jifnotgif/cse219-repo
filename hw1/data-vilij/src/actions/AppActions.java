@@ -174,7 +174,7 @@ public final class AppActions implements ActionComponent {
                     }
                 }
             }
-            if (((AppData) applicationTemplate.getDataComponent()).getProcessor().isAlgorithmRunning()) {
+            if (((AppData) applicationTemplate.getDataComponent()).getProcessor().getAlgorithmIsRunning()) {
                 ConfirmationDialog exitRequest = (ConfirmationDialog) applicationTemplate.getDialog(Dialog.DialogType.CONFIRMATION);
                 exitRequest.show(applicationTemplate.manager.getPropertyValue(EXIT_TITLE.name()), applicationTemplate.manager.getPropertyValue(EXIT_WHILE_RUNNING_WARNING.name()));
                 Option userSelection = exitRequest.getSelectedOption();
