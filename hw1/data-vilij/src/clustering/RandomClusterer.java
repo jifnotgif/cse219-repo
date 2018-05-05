@@ -86,6 +86,7 @@ public class RandomClusterer extends Clusterer{
     @Override
     public void run(){
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
+        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(true);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
@@ -105,9 +106,14 @@ public class RandomClusterer extends Clusterer{
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
                     });
                     
                     counter.set(0);
+
+                    ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+
+                    algorithmActiveState.set(false);
                     break;
                 }
                 try {
@@ -134,17 +140,21 @@ public class RandomClusterer extends Clusterer{
                 }
                 
                 
-                if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
+                if (counter.get() > maxIterations * .6 && RAND.nextDouble() < 0.05) {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
                         
                         setNewLabels();
                     });
                     
                     counter.set(0);
+                    ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+
+                    algorithmActiveState.set(false);
                     break;
                 }
                 try {
@@ -155,10 +165,8 @@ public class RandomClusterer extends Clusterer{
             }
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
+        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
-        ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
-        algorithmActiveState.set(false);
-        
             
     }
     

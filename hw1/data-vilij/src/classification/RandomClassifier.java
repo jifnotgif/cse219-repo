@@ -75,6 +75,7 @@ public class RandomClassifier extends Classifier {
     @Override
     public void run() {
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
+        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(true);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
@@ -111,8 +112,13 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
                     });
                     counter.set(0);
+                    
+                    ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+
+                    algorithmActiveState.set(false);
                     break;
                 }
                 try {
@@ -155,9 +161,14 @@ public class RandomClassifier extends Classifier {
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
                         calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
 
                     });
                     counter.set(0);
+                    
+                    ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
+
+                    algorithmActiveState.set(false);
                     break;
                 }
 
@@ -170,8 +181,6 @@ public class RandomClassifier extends Classifier {
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
-        ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
-         algorithmActiveState.set(false);
         
         
     }

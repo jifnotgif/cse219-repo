@@ -77,5 +77,15 @@ public class ConfigState {
         this.continuousState.set(continuousState);
     }
     
+    @Override
+    public boolean equals(Object otherObject){
+       if(this == otherObject) return true;
+       if(otherObject == null) return false;
+       if(this.getClass() != otherObject.getClass()) return false;
+       return this.getIntervals() == ((ConfigState)otherObject).getIntervals() 
+               && this.getIterations() == ((ConfigState)otherObject).getIterations()
+               && this.getLabels() == ((ConfigState)otherObject).getLabels()
+               && this.isContinuousState() == ((ConfigState)otherObject).isContinuousState();
+    }
     
 }
