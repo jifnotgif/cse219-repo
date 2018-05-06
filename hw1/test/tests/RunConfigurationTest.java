@@ -65,10 +65,20 @@ public class RunConfigurationTest {
     
     @Test
     public void setRunConfigValues_modified(){
+        /*
+        boundary value: updateInterval > maxIterations, set updateInterval to 1
+        boundary value: clusters <2, clusters = 2
+        */
         setConfigValues(-1,200,100, true);
         Assert.assertEquals(new ConfigState(null, listofiterations[2],listofintervals[2] , listofclusters[2], new AtomicBoolean(true)), settings);
-        setConfigValues(4,1,100, false);
+        /*
+        boundary value: clusters >4, clusters = 4
+        */
+        setConfigValues(5,1,100, false);
         Assert.assertEquals(new ConfigState(null, listofiterations[2], listofintervals[2], listofclusters[4], new AtomicBoolean(false)), settings);
+        /*
+        boundary value: updateInterval == 0 & maxIterations == 0, updateInterval = 1 & maxIterations = 100
+        */
         setConfigValues(2, 0, 0, false);
         Assert.assertEquals(new ConfigState(null, listofiterations[2], listofintervals[2], listofclusters[2], new AtomicBoolean(false)), settings);      
     }

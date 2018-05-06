@@ -43,14 +43,17 @@ public class DataProcessorTest {
     public void tearDown() {
     }
 
-    /**
-     * Test of processString method, of class TSDProcessor.
-     */
+    /*
+    boundary value: incorrect data format
+    */
     @Test(expected = InvalidDataNameException.class)
     public void testProcessString_invalidFormat() throws Exception {
         tsdString = "@instancelabel0,0";
         processor.processString(tsdString);
     }
+    /*
+    boundary value: multiple instances with same name
+    */
     @Test(expected = InvalidDataNameException.class)
     public void testProcessString_duplicates() throws Exception {
         tsdString = "@instance\tlabel\t0,0\n@instance\tcategory\t5,5\n";
@@ -58,6 +61,9 @@ public class DataProcessorTest {
         
     }
     
+    /*
+    boundary value: no string is given
+    */
     @Test(expected = NullPointerException.class)
     public void testProcessString_null() throws Exception {
         tsdString = null;
