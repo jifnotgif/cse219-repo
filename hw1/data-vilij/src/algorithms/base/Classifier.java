@@ -5,7 +5,10 @@
  */
 package algorithms.base;
 import algorithms.base.Algorithm;
+import data.DataSet;
 import java.util.List;
+import ui.ConfigState;
+import vilij.templates.ApplicationTemplate;
 
 /**
  * An abstract class for classification algorithms. The output
@@ -26,6 +29,8 @@ public abstract class Classifier implements Algorithm {
      */
     protected List<Integer> output;
 
+    public Classifier(){}
+    public Classifier(ConfigState s, DataSet d, ApplicationTemplate template){}
     public List<Integer> getOutput() { return output; }
-
+    
 }

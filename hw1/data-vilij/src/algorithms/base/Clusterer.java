@@ -19,6 +19,9 @@ public abstract class Clusterer implements Algorithm {
 
     public int getNumberOfClusters() { return numberOfClusters; }
 
+    public Clusterer(){
+        numberOfClusters =0;
+    }
     public Clusterer(ConfigState s) {
         if ( s.getLabels() < 2)
             s.setLabels(2); 

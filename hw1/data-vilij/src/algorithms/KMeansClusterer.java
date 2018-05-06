@@ -41,6 +41,18 @@ public class KMeansClusterer extends Clusterer {
     private final AtomicBoolean continuousState;
     private final AtomicBoolean algorithmActiveState;
     private final AtomicInteger counter;
+      
+    public KMeansClusterer(){
+        this.counter = null;
+        this.dataset = null;
+        this.applicationTemplate = null;
+        this.maxIterations = 0;
+        this.updateInterval = 0;
+        this.tocontinue = null;
+        this.continuousState = null;
+        
+        this.algorithmActiveState = null;
+    }
 
     public KMeansClusterer(ConfigState settings, DataSet data, ApplicationTemplate ui) {
         super(settings);
@@ -55,6 +67,7 @@ public class KMeansClusterer extends Clusterer {
         setChartBounds();
     }
 
+ 
     @Override
     public int getMaxIterations() {
         return maxIterations;
@@ -96,7 +109,7 @@ public class KMeansClusterer extends Clusterer {
                     });   
                 }
                 try {
-                    sleep(200);
+                    sleep(400);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

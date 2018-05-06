@@ -27,7 +27,6 @@ public class RandomClassifier extends Classifier {
     ApplicationTemplate applicationTemplate;
 
     private DataSet dataset;
-    private XYChart<Number, Number> chart;
 
     private final AtomicInteger counter;
     private final int maxIterations;
@@ -58,7 +57,8 @@ public class RandomClassifier extends Classifier {
     public boolean tocontinue() {
         return tocontinue.get();
     }
-
+    
+    
     public RandomClassifier(ConfigState settings, DataSet dataset, ApplicationTemplate ui) {
         this.dataset = dataset;
         this.applicationTemplate = ui;
@@ -69,6 +69,16 @@ public class RandomClassifier extends Classifier {
         this.algorithmActiveState = new AtomicBoolean(false);
     }
 
+    public RandomClassifier(){
+        this.counter = null;
+        this.dataset = null;
+        this.applicationTemplate =  null;
+        this.maxIterations = 0;
+        this.updateInterval = 0;
+        this.tocontinue = null;
+        
+        this.algorithmActiveState = null;
+    }
     @Override
     public void run() {
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
@@ -110,7 +120,7 @@ public class RandomClassifier extends Classifier {
                     break;
                 }
                 try {
-                    sleep(50);
+                    sleep(150);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -184,7 +194,7 @@ public class RandomClassifier extends Classifier {
 
     private void calculateLineOutput() {
         if (algorithmLine != null) {
-            chart.getData().remove(algorithmLine);
+            ((AppUI)applicationTemplate.getUIComponent()).getLineChart().getData().remove(algorithmLine);
         }
 
         algorithmLine = new XYChart.Series<>();
@@ -211,7 +221,7 @@ public class RandomClassifier extends Classifier {
 
         algorithmLine.getData().add(new XYChart.Data<>(x1, y1));
         algorithmLine.getData().add(new XYChart.Data<>(x2, y2));
-        chart.getData().add(algorithmLine);
+        ((AppUI)applicationTemplate.getUIComponent()).getLineChart().getData().add(algorithmLine);
 
         algorithmLine.getNode().setId("algorithm");
 

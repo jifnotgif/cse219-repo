@@ -40,7 +40,17 @@ public class RandomClusterer extends Clusterer {
     private final AtomicBoolean algorithmActiveState;
     private final AtomicBoolean tocontinue;
     private ArrayList<String> labels;
-
+    
+    public RandomClusterer(){
+        this.counter = null;
+        this.dataset = null;
+        this.applicationTemplate = null;
+        this.maxIterations = 0;
+        this.updateInterval = 0;
+        this.tocontinue = null;
+        
+        this.algorithmActiveState = null;
+    }
     public RandomClusterer(ConfigState settings, DataSet dataset, ApplicationTemplate ui) {
         super(settings);
         this.dataset = dataset;
