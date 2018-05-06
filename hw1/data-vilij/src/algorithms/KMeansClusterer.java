@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package clustering;
+package algorithms;
 
-import algorithms.Clusterer;
+import algorithms.base.Clusterer;
 import data.DataSet;
 import dataprocessors.AppData;
 import static java.lang.Thread.sleep;
@@ -96,7 +96,7 @@ public class KMeansClusterer extends Clusterer {
                     });   
                 }
                 try {
-                    sleep(250);
+                    sleep(200);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -115,6 +115,10 @@ public class KMeansClusterer extends Clusterer {
             algorithmActiveState.set(false);
         } else {
             while (counter.get() < maxIterations) {
+                Platform.runLater(()->{
+                    ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(true);
+                    ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
+                });
                 counter.getAndIncrement();
                 assignLabels();
                 recomputeCentroids();
@@ -236,5 +240,9 @@ public class KMeansClusterer extends Clusterer {
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yMaxBound);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
 
+    }
+    
+    public String getName(){
+        return this.getClass().getName();
     }
 }

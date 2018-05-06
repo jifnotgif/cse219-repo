@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package algorithms;
+package algorithms.base;
 
-import algorithms.Algorithm;
+import algorithms.base.Algorithm;
 import data.DataSet;
 import javafx.scene.chart.XYChart;
 import ui.ConfigState;

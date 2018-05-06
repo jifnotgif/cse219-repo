@@ -1,12 +1,15 @@
-package classification;
-
-import algorithms.Classifier;
-import data.DataSet;
-import dataprocessors.AppData;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package algorithms;
 
 import static java.lang.Thread.sleep;
-import java.util.Arrays;
-import java.util.List;
+import algorithms.base.Clusterer;
+import data.DataSet;
+import dataprocessors.AppData;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,9 +20,10 @@ import ui.ConfigState;
 import vilij.templates.ApplicationTemplate;
 
 /**
- * @author Ritwik Banerjee
+ *
+ * @author David
  */
-public class RandomClassifier extends Classifier {
+public class RandomClusterer extends Clusterer {
 
     private static final Random RAND = new Random();
 
@@ -28,23 +32,27 @@ public class RandomClassifier extends Classifier {
     ApplicationTemplate applicationTemplate;
 
     private DataSet dataset;
-    private XYChart<Number, Number> chart;
+//    private XYChart<Number, Number> chart;
 
     private final AtomicInteger counter;
     private final int maxIterations;
     private final int updateInterval;
-
-    // currently, this value does not change after instantiation
+    private final AtomicBoolean algorithmActiveState;
     private final AtomicBoolean tocontinue;
-    private List<Integer> output;
-    private XYChart.Series<Number, Number> algorithmLine;
-    private AtomicBoolean algorithmActiveState;
-    private int x1;
-    private int x2;
-    private int y1;
-    private int y2;
-    private int yMinBound;
-    private int yMaxBound;
+    private ArrayList<String> labels;
+
+    public RandomClusterer(ConfigState settings, DataSet dataset, ApplicationTemplate ui) {
+        super(settings);
+        this.dataset = dataset;
+        this.applicationTemplate = ui;
+        this.maxIterations = settings.getIterations();
+        this.updateInterval = settings.getIntervals();
+        this.tocontinue = new AtomicBoolean(settings.isContinuousState());
+        this.counter = new AtomicInteger(0);
+        this.algorithmActiveState = new AtomicBoolean(false);
+        intializeLabels();
+        setChartBounds();
+    }
 
     @Override
     public int getMaxIterations() {
@@ -61,15 +69,16 @@ public class RandomClassifier extends Classifier {
         return tocontinue.get();
     }
 
-    public RandomClassifier(DataSet dataset, XYChart<Number, Number> chart, ApplicationTemplate ui, ConfigState settings) {
-        this.dataset = dataset;
-        this.chart = chart;
-        this.applicationTemplate = ui;
-        this.maxIterations = settings.getIterations();
-        this.updateInterval = settings.getIntervals();
-        this.tocontinue = new AtomicBoolean(settings.isContinuousState());
-        this.counter = new AtomicInteger(0);
-        this.algorithmActiveState = new AtomicBoolean(false);
+    public int getIterationCounter() {
+        return counter.get();
+    }
+
+    public void incrementCounter() {
+        counter.addAndGet(updateInterval);
+    }
+
+    public boolean isAlgorithmActive() {
+        return algorithmActiveState.get();
     }
 
     @Override
@@ -79,44 +88,26 @@ public class RandomClassifier extends Classifier {
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(true);
         algorithmActiveState.set(true);
         if (tocontinue()) {
-            for (int i = 1; i <= maxIterations; i++) {
+            for (int i = 0; i < maxIterations; i++) {
                 counter.getAndIncrement();
-                int xCoefficient = new Long(-1 * Math.round((2 * RAND.nextDouble() - 1) * 10)).intValue();
-                int yCoefficient = 10;
-                int constant = RAND.nextInt(11);
-
-                // this is the real output of the classifier
-                output = Arrays.asList(xCoefficient, yCoefficient, constant);
-
-                // everything below is just for internal viewing of how the output is changing
-                // in the final project, such changes will be dynamically visible in the UI
-//                    System.out.println(output);
-//                    System.out.printf("Iteration number %d: ", i); //
                 if (i % updateInterval == 0) {
-//                    System.out.printf("Iteration number %d: ", i); //
-//                    flush();
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("disabled");
-                        calculateLineOutput();
-                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(true);
-
+                        setNewLabels();
                     });
                 }
 
                 if (i > maxIterations * .6 && RAND.nextDouble() < 0.05) {
-//                    System.out.printf("Iteration number %d: ", i);
-//                    flush();
-
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
-                        calculateLineOutput();
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
                     });
+
                     counter.set(0);
-                    
+
                     ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
 
                     algorithmActiveState.set(false);
@@ -130,49 +121,49 @@ public class RandomClassifier extends Classifier {
             }
 
         } else {
-            for (int i = 0; i <= updateInterval; i++) {
+            for (int i = counter.get(); i < maxIterations; i++) {
+                Platform.runLater(()->{
+                    ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(true);
+                    ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(true);
+                });
                 counter.getAndIncrement();
-                int xCoefficient = new Long(-1 * Math.round((2 * RAND.nextDouble() - 1) * 10)).intValue();
-                int yCoefficient = 10;
-                int constant = RAND.nextInt(11);
-
-                // this is the real output of the classifier
-                output = Arrays.asList(xCoefficient, yCoefficient, constant);
-
-                // everything below is just for internal viewing of how the output is changing
-                // in the final project, such changes will be dynamically visible in the UI
-//                    System.out.println(output);
+                
                 if (counter.get() % updateInterval == 0) {
-//                    System.out.printf("Iteration number %d: ", counter.get());
-//                    flush();
                     Platform.runLater(() -> {
+
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("busy");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Resume");
-                        calculateLineOutput();
+
+                        setNewLabels();
+
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
                     });
-//                        //update gui then set to true again
+                    synchronized (Thread.currentThread()) {
+                        try {
+                            Thread.currentThread().wait();
+                        } catch (InterruptedException ex) {
+                        }
+                    }
                 }
+
                 if (counter.get() > maxIterations * .6 && RAND.nextDouble() < 0.05) {
-//                    System.out.printf("Iteration number %d: ", counter.get());
-//                    flush();
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setText("Run");
-                        calculateLineOutput();
+                        ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
-
+                        setNewLabels();
                     });
+
                     counter.set(0);
-                    
                     ((AppData) applicationTemplate.getDataComponent()).getProcessor().setAlgorithmIsRunning(false);
 
                     algorithmActiveState.set(false);
                     break;
                 }
-
                 try {
                     sleep(50);
                 } catch (InterruptedException e) {
@@ -182,70 +173,49 @@ public class RandomClassifier extends Classifier {
         }
         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
         ((AppUI) applicationTemplate.getUIComponent()).getToggleButton().setDisable(false);
-        
-        
-    }
-
-    // for internal viewing only
-    protected void flush() {
-        System.out.printf("%d\t%d\t%d%n", output.get(0), output.get(1), output.get(2));
 
     }
 
-    public int getIterationCounter() {
-        return counter.get();
-    }
+    public void setNewLabels() {
 
-    public void incrementCounter() {
-        counter.addAndGet(updateInterval);
-    }
+        for (String instance : dataset.getLabels().keySet()) {
+            Random rand = new Random();
+            int labelNum = rand.nextInt(this.getNumberOfClusters());
 
-    private void calculateLineOutput() {
-        if (algorithmLine != null) {
-            chart.getData().remove(algorithmLine);
+            dataset.getLabels().put(instance, labels.get(labelNum));
         }
-        
-//        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setTickUnit(10);
-//        if (output == null) {
-//            return;
-//        }
-        
-        algorithmLine = new XYChart.Series<>();
-        algorithmLine.setName("Classification Line");
+        ((AppUI) applicationTemplate.getUIComponent()).getChart().getData().clear();
+        ((AppData) applicationTemplate.getDataComponent()).displayData();
+    }
 
-        x1 = dataset.getMinX();
-        x2 = dataset.getMaxX();
-        yMinBound = dataset.getMinY() -5;
-        yMaxBound = dataset.getMaxY()+ 5;
-        
-        y1 = (int) ((-output.get(2) - output.get(0) * x1) / output.get(1));
-        y2 = (int) ((-output.get(2) - output.get(0) * x2) / output.get(1));
-        
+    private void intializeLabels() {
+        labels = new ArrayList<>();
+        for (int i = 1; i <= this.getNumberOfClusters(); i++) {
+            labels.add("" + i);
+        }
+
+    }
+
+    private void setChartBounds() {
+
+        int x1 = dataset.getMinX();
+        int x2 = dataset.getMaxX();
+        int yMinBound = dataset.getMinY() - 5;
+        int yMaxBound = dataset.getMaxY() + 5;
+
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setLowerBound(x1 - 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setUpperBound(x2 + 1);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setForceZeroInRange(false);
         ((AppUI) applicationTemplate.getUIComponent()).getXAxis().setAutoRanging(false);
-//        double yLowerBound = dataset.getLocations().values().stream().mapToDouble(Point2D::getY).min().orElse(0.0);
 
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setLowerBound(yMinBound);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setUpperBound(yMaxBound);
-//        ((AppUI)applicationTemplate.getUIComponent()).getYAxis().setForceZeroInRange(false);
         ((AppUI) applicationTemplate.getUIComponent()).getYAxis().setAutoRanging(false);
 
-        algorithmLine.getData().add(new XYChart.Data<>(x1, y1));
-        algorithmLine.getData().add(new XYChart.Data<>(x2, y2));
-        chart.getData().add(algorithmLine);
-
-        algorithmLine.getNode().setId("algorithm");
-        
-//        for(XYChart.Data<Number,Number> x : algorithmLine.getData()){
-//            x.getNode().setVisible(false);
-//        }
-    }
-
-    public boolean isAlgorithmActive() {
-        return algorithmActiveState.get();
     }
     
-}
+    public String getName(){
+        return this.getClass().getName();
+    }
 
+}

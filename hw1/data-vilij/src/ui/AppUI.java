@@ -5,8 +5,10 @@
 package ui;
 
 import actions.AppActions;
+import data.DataSet;
 import dataprocessors.AppData;
 import dataprocessors.TSDProcessor.InvalidDataNameException;
+import java.io.File;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.NumberAxis;
@@ -30,8 +32,17 @@ import vilij.propertymanager.PropertyManager;
 
 import static java.io.File.separator;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ListChangeListener;
@@ -53,6 +64,8 @@ import vilij.components.Dialog;
 import vilij.components.ErrorDialog;
 import static vilij.settings.PropertyTypes.GUI_RESOURCE_PATH;
 import static vilij.settings.PropertyTypes.ICONS_RESOURCE_PATH;
+
+//import java.lang.reflect.
 
 /**
  * This is the application's user interface implementation.
@@ -117,11 +130,20 @@ public final class AppUI extends UITemplate {
     private Button currentSettingsButton;
     private Button  returnButton;
 
+    /**
+     *
+     * @param primaryStage
+     * @param applicationTemplate
+     */
     public AppUI(Stage primaryStage, ApplicationTemplate applicationTemplate) {
         super(primaryStage, applicationTemplate);
         this.applicationTemplate = applicationTemplate;
     }
 
+    /**
+     *
+     * @param applicationTemplate
+     */
     @Override
     protected void setResourcePaths(ApplicationTemplate applicationTemplate) {
         super.setResourcePaths(applicationTemplate);
@@ -133,6 +155,10 @@ public final class AppUI extends UITemplate {
         settingsiconPath = String.join(separator, iconsPath, manager.getPropertyValue(SETTINGS_ICON.name()));
     }
 
+    /**
+     *
+     * @param applicationTemplate
+     */
     @Override
     protected void setToolBar(ApplicationTemplate applicationTemplate) {
         PropertyManager manager = applicationTemplate.manager;
@@ -220,6 +246,19 @@ public final class AppUI extends UITemplate {
 
     @Override
     public void initialize() {
+        try {
+            initializeAlgorithms();
+        } catch (NoSuchMethodException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
         layout();
         setWorkspaceActions();
 
@@ -293,6 +332,35 @@ public final class AppUI extends UITemplate {
         Label classificationTypeTitle = new Label(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()));
         classificationTypeTitle.setId(applicationTemplate.manager.getPropertyValue(ALGORITHM_TITLE_ID.name()));
 
+//        try {
+//            List<String> names = new ArrayList<>();
+//            String pkg = "algorithms";
+//            URI resources = this.getClass().getResource("/" + pkg).toURI();
+//            File[] files = new File(resources).listFiles();
+//            for (File f : files){
+//                if(f.isFile()){
+//                    String filename = pkg+"."+ f.getName().replaceFirst("[.][^.]+$", "");
+//                    names.add(filename);
+//                }
+//            }
+//            for (String n : names){
+//                Class<?> klass= Class.forName(n);
+//                 for(Object algorithmName: klass.getDeclaredClasses()[0].getEnumConstants()){
+//                    Class algorithmKlass;
+//                    algorithmKlass = Class.forName(applicationTemplate.manager.getPropertyValue(algorithms.base.Algorithm.name())+algorithmName);
+//                    Constructor algorithmKonstructor =algorithmKlass.getConstructors()[0];
+//
+//                
+//                    
+//                }
+//            }
+//        } catch (URISyntaxException ex) {
+//            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (ClassNotFoundException ex) {
+//            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
+//        
         Button classificationSettings1 = new Button();
         classificationSettings1.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
         classificationSettings1.setId(applicationTemplate.manager.getPropertyValue(CLASSIFICATION.name()));
@@ -407,14 +475,26 @@ public final class AppUI extends UITemplate {
         appPane.getChildren().add(pane);
     }
 
+    /**
+     *
+     * @return
+     */
     public TextArea getTextArea() {
         return textArea;
     }
 
+    /**
+     *
+     * @return
+     */
     public Button getSaveButton() {
         return saveButton;
     }
 
+    /**
+     *
+     * @return
+     */
     public VBox getVBox() {
         return vPane;
     }
@@ -422,6 +502,11 @@ public final class AppUI extends UITemplate {
 //    public String getStoredData() {
 //        return storedData;
 //    }
+
+    /**
+     *
+     * @return
+     */
 
     public LineChart getLineChart() {
         return lineChart;
@@ -532,7 +617,7 @@ public final class AppUI extends UITemplate {
 
             }
         });
-
+        
         for (Button b : configButtons) {
             b.setOnAction(handler -> {
                 algorithmConfigWindow = new Stage();
@@ -607,20 +692,21 @@ public final class AppUI extends UITemplate {
 
                 if (clustersField == null) {
                     clusters = 2;
-                } else if (clustersField.textProperty().get().equals("") || Integer.parseInt(clustersField.textProperty().get()) <= 0) {
+                } else if (clustersField.textProperty().get().equals("") || Integer.parseInt(clustersField.textProperty().get()) <= 2) {
                     clusters = 2;
                 } else {
                     clusters = Integer.parseInt(clustersField.textProperty().get());
                 }
-                if (intervalsField.textProperty().get().equals("") || Integer.parseInt(intervalsField.textProperty().get()) <= 0) {
-                    intervals = 5;
-                } else {
-                    intervals = Integer.parseInt(intervalsField.textProperty().get());
-                }
-                if (iterationsField.textProperty().get().equals("") || Integer.parseInt(iterationsField.textProperty().get()) <= 0) {
-                    iterations = 1000;
+
+                if (iterationsField.textProperty().get().equals("") || Integer.parseInt(iterationsField.textProperty().get()) <= 0|| Integer.parseInt(iterationsField.textProperty().get()) > 1000) {
+                    iterations = 100;
                 } else {
                     iterations = Integer.parseInt(iterationsField.textProperty().get());
+                }
+                if (intervalsField.textProperty().get().equals("") || Integer.parseInt(intervalsField.textProperty().get()) <= 0 || Integer.parseInt(intervalsField.textProperty().get()) > Integer.parseInt(iterationsField.textProperty().get()) ) {
+                    intervals = 1;
+                } else {
+                    intervals = Integer.parseInt(intervalsField.textProperty().get());
                 }
 
                 boolean continuousState = runOption.isSelected();
@@ -676,7 +762,7 @@ public final class AppUI extends UITemplate {
             ((AppData) applicationTemplate.getDataComponent()).displayData();
             returnButton.setDisable(true);
             if (((RadioButton) (currentAlgorithmTypeSelection)).getId().equals("Random Classification")) {
-                ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings, this.getLineChart());
+                ((AppData) applicationTemplate.getDataComponent()).getProcessor().runClassificationAlgorithm(currentSettings);
             }
             if (((RadioButton) (currentAlgorithmTypeSelection)).getId().equals("Random Clustering")) {
                 ((AppData) applicationTemplate.getDataComponent()).getProcessor().runRandomClusteringAlgorithm(currentSettings);
@@ -699,10 +785,17 @@ public final class AppUI extends UITemplate {
 
     }
 
+    /**
+     *
+     * @param path
+     */
     public void setFilePath(String path) {
         dataSource = path;
     }
 
+    /**
+     *
+     */
     public void setFileMetaData() {
         numLabels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getNumLabels();
         labels = ((AppData) applicationTemplate.getDataComponent()).getProcessor().getLabels();
@@ -712,6 +805,10 @@ public final class AppUI extends UITemplate {
                 + applicationTemplate.manager.getPropertyValue(SOURCE_INFO.name()) + dataSource);
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean processData() {
         try {
             clear();
@@ -833,47 +930,132 @@ public final class AppUI extends UITemplate {
         cachedSettings.clear();
     }
 
+    /**
+     *
+     * @return
+     */
     public ScatterChart<Number, Number> getChart() {
         return scatterChart;
     }
 
+    /**
+     *
+     * @return
+     */
     public StackPane getChartPane() {
         return charts;
     }
 
+    /**
+     *
+     * @return
+     */
     public Button getRunButton() {
         return runAlgorithm;
     }
     
+    /**
+     *
+     * @return
+     */
     public Button getScreenshotButton(){
         return scrnshotButton;
     }
     
+    /**
+     *
+     * @return
+     */
     public NumberAxis getXAxis(){
         return xAxis;
     }
     
+    /**
+     *
+     * @return
+     */
     public NumberAxis getYAxis(){
         return yAxis;
     }
     
+    /**
+     *
+     * @return
+     */
     public Label getIterationLabel(){
         return iterationLabel;
     }
     
+    /**
+     *
+     * @param count
+     */
     public void setIterationLabelCount(int count){
         iterationLabel.setText("Iteration number: " + count);
     }
     
+    /**
+     *
+     * @return
+     */
     public boolean getHasNewText(){
         return hasNewText;
     }
     
+    /**
+     *
+     * @return
+     */
     public Button getToggleButton() {
         return toggleButton;
     }
     
+    /**
+     *
+     * @return
+     */
     public Button getReturnButton(){
         return returnButton;
     }
+
+    private void initializeAlgorithms() throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        try {
+            List<String> names = new ArrayList<>();
+            String pkg = "algorithms";
+            URI resources = this.getClass().getResource("/" + pkg).toURI();
+            File[] files = new File(resources).listFiles();
+            for (File f : files){
+                if(f.isFile()){
+                    String filename = pkg+"."+ f.getName().replaceFirst("[.][^.]+$", "");
+                    names.add(filename);
+                }
+            }
+            for (String n : names){
+                Class c = Class.forName(n);
+                Constructor cons = c.getConstructor(ConfigState.class, DataSet.class, ApplicationTemplate.class);
+                Object o = cons.newInstance(currentSettings, new DataSet(), applicationTemplate);
+                
+//                System.out.println(c.getMethod(n, parameterTypes));
+                Method m = c.getMethod("getName", null);
+                System.out.println(m);
+                m.invoke(o);
+//                String test = (String) m.invoke(c);
+//                System.out.println(test);
+            }
+        } catch (URISyntaxException ex) {
+            System.out.println("failed1");
+        } 
+        catch (ClassNotFoundException ex) {
+            System.out.println("failed2");
+//        } catch (InstantiationException ex) {
+//            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(AppUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            System.out.println(ex.getCause());
+        }
+    }
 }
+

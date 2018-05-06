@@ -3,7 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package algorithms;
+package algorithms.base;
+import algorithms.base.Algorithm;
 import java.util.List;
 
 /**

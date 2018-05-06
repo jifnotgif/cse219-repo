@@ -1,10 +1,11 @@
 package dataprocessors;
 
-import algorithms.Algorithm;
-import classification.RandomClassifier;
-import clustering.KMeansClusterer;
-import clustering.RandomClusterer;
+import algorithms.base.Algorithm;
+import algorithms.RandomClassifier;
+import algorithms.KMeansClusterer;
+import algorithms.RandomClusterer;
 import data.DataSet;
+import dataprocessors.TSDProcessor.InvalidDataNameException;
 import static java.lang.Thread.sleep;
 import javafx.geometry.Point2D;
 import javafx.scene.chart.XYChart;
@@ -38,7 +39,7 @@ public final class TSDProcessor {
     private RandomClassifier currentRandomClassifier;
     private RandomClusterer currentRandomClusterer;
     private KMeansClusterer currentKMeansClusterer;
-    private Thread t;
+    private Thread currentAlgorithm_thread;
 
     public static class InvalidDataNameException extends Exception {
 
@@ -69,7 +70,7 @@ public final class TSDProcessor {
      * @param tsdString the input data provided as a single {@link String}
      * @throws Exception if the input string does not follow the <code>.tsd</code> data format
      */
-    public void processString(String tsdString) throws Exception {
+    public void processString(String tsdString) throws InvalidDataNameException {
         this.data = new DataSet();
         AtomicBoolean containsDuplicates = new AtomicBoolean(false);
         AtomicBoolean hadAnError   = new AtomicBoolean(false);
@@ -84,6 +85,7 @@ public final class TSDProcessor {
               .map(line -> Arrays.asList(line.split(TAB)))
               .forEach(list -> {
                   try {
+                      if(tsdString.trim().equals("")) throw new InvalidDataNameException("test");
                       String   name  = checkedname(list.get(0));
                       if(duplicateNames.contains(name)){
                           linesWithError.add((Integer)lineCount.get());
@@ -100,7 +102,6 @@ public final class TSDProcessor {
                   } catch (Exception e) {
                       linesWithError.add((Integer)lineCount.get());
                       errorMessage.setLength(0);
-                      // if all data points with error are wanted, reate a new arraylist of names and append to message instead of list.get(0)
                       errorMessage.append(list.get(0)).append("'.\nError on line(s): ").append(linesWithError.toString().substring(1,linesWithError.toString().length()-1)).append(NEW_LINE);  
                       hadAnError.set(true);
                   }
@@ -114,6 +115,10 @@ public final class TSDProcessor {
         if (errorMessage.length() > 0)
             throw new InvalidDataNameException(errorMessage.toString());
         
+    }
+
+    public DataSet getData() {
+        return data;
     }
 
     public boolean isChartEmpty(){
@@ -186,13 +191,27 @@ public final class TSDProcessor {
 //        return currentRandomClassifier.isAlgorithmActive();
 //    }
     
-    public void runClassificationAlgorithm(ConfigState settings, XYChart<Number, Number> chart){
-        if(currentRandomClassifier == null) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
-        else if(!currentRandomClassifier.isAlgorithmActive()) currentRandomClassifier = new RandomClassifier(data, chart, applicationTemplate, settings);
-        
-        Thread t = new Thread(currentRandomClassifier);
-        t.start();
-        this.algorithmIsRunning = t.isAlive();
+    public void runClassificationAlgorithm(ConfigState settings){
+        if(currentRandomClassifier == null) {
+            currentRandomClassifier = new RandomClassifier(settings, data, applicationTemplate);
+            currentAlgorithm_thread = new Thread(currentRandomClassifier);
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
+        }
+        else if(!currentRandomClassifier.isAlgorithmActive()) {
+            currentRandomClassifier = new RandomClassifier(settings, data, applicationTemplate);
+
+            currentAlgorithm_thread = new Thread(currentRandomClassifier);
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
+        }
+        else{
+            
+            synchronized(currentAlgorithm_thread){
+                currentAlgorithm_thread.notify();
+            }
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
+        }
          
     }
     
@@ -201,40 +220,45 @@ public final class TSDProcessor {
         if(currentRandomClusterer == null) {
             currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
             
+            currentAlgorithm_thread = new Thread(currentRandomClusterer);
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
         }
         else if(!currentRandomClusterer.isAlgorithmActive()) {
             currentRandomClusterer = new RandomClusterer(settings, data, applicationTemplate);
+
+            currentAlgorithm_thread = new Thread(currentRandomClusterer);
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
         }
-        Thread t = new Thread(currentRandomClusterer);
-        t.start();
-        this.algorithmIsRunning = t.isAlive();
-        
+        else{
+            
+            synchronized(currentAlgorithm_thread){
+                currentAlgorithm_thread.notify();
+            }
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
+        }
     }
     
     public void runKMeansClusteringAlgorithm(ConfigState settings){
         if(currentKMeansClusterer == null) {
             currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
-            t = new Thread(currentKMeansClusterer);
+            currentAlgorithm_thread = new Thread(currentKMeansClusterer);
 
-            t.start();
-            this.algorithmIsRunning = t.isAlive();
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
         }
         else if(!currentKMeansClusterer.isAlgorithmActive()) {
             currentKMeansClusterer = new KMeansClusterer(settings, data, applicationTemplate);
-            t = new Thread(currentKMeansClusterer);
-            t.start();
-            this.algorithmIsRunning = t.isAlive();
+            currentAlgorithm_thread = new Thread(currentKMeansClusterer);
+            currentAlgorithm_thread.start();
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
         }
         else{
-            synchronized(t){
-                t.notify();
+            synchronized(currentAlgorithm_thread){
+                currentAlgorithm_thread.notify();
             }
-            this.algorithmIsRunning = t.isAlive();
-        
-
-//            while(t.isAlive()){
-//                if(t.getState().equals(Thread.State.WAITING))  t.notify();
-//            }
+            this.algorithmIsRunning = currentAlgorithm_thread.isAlive();
             }
         
     }

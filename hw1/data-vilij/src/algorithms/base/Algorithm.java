@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package algorithms;
+package algorithms.base;
 
 /**
  * This interface provides a way to run an algorithm
@@ -12,6 +12,7 @@ package algorithms;
  * @author Ritwik Banerjee
  */
 public interface Algorithm extends Runnable {
+
 
     int getMaxIterations();
 
