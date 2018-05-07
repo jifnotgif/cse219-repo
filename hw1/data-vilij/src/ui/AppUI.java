@@ -309,7 +309,6 @@ public final class AppUI extends UITemplate {
         algorithmList = new VBox(10);
 
         algorithmRadioButtons = new ArrayList<>();
-        configButtons = new ArrayList<>();
         cachedSettings = new ArrayList<>();
         algorithmToggle = new ToggleGroup();
 
@@ -753,21 +752,26 @@ public final class AppUI extends UITemplate {
     }
 
     private void loadAlgorithms(String type, List<String> names) {
+                configButtons = new ArrayList<>();
         for (String n : names) {
             try {
                 Class<?> klass = Class.forName(n);
                 Algorithm o = (Algorithm) klass.newInstance();
-                Button settingsButton = new Button();
+                final Button settingsButton = new Button();
                 settingsButton.getStyleClass().add(applicationTemplate.manager.getPropertyValue(SETTINGS_CSS_CLASS.name()));
                 settingsButton.setGraphic(new ImageView(settingsImage));
                 
-                if(configButtons.size() < 4) configButtons.add(settingsButton);
+                if(configButtons.size() < names.size()) {
+                    configButtons.add(settingsButton);
+                }
 
                 HBox algorithmContainer = new HBox();
                 algorithmContainer.setAlignment(Pos.CENTER_LEFT);
 //                System.out.println(klass.getCanonicalName());
                 RadioButton algorithmSelection = new RadioButton(applicationTemplate.manager.getPropertyValue(klass.getSimpleName()));
-                if(algorithmRadioButtons.size() < 4) algorithmRadioButtons.add(algorithmSelection);
+                if(algorithmRadioButtons.size() < names.size()) {
+                    algorithmRadioButtons.add(algorithmSelection);
+                }
                 algorithmContainer.getChildren().addAll(algorithmSelection, settingsButton);
 
                 algorithmSelection.setToggleGroup(algorithmToggle);
@@ -781,6 +785,7 @@ public final class AppUI extends UITemplate {
                 }
 
                 settingsButton.setOnAction(handler -> {
+                    
                     algorithmConfigWindow = new Stage();
                     algorithmConfigWindow.initModality(Modality.APPLICATION_MODAL);
                     algorithmConfigWindow.setTitle(applicationTemplate.manager.getPropertyValue(ALGO_SETTINGS_TITLE.name()));
@@ -806,7 +811,7 @@ public final class AppUI extends UITemplate {
                         clustersField.setPromptText("2");
                         clustersField.setFocusTraversable(false);
                         content.add(clustersField, 1, 2);
-                        if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(settingsButton)) != null && settingsButton.equals(cachedSettings.get(configButtons.indexOf(settingsButton)).getBtn())) {
+                        if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(settingsButton)) != null ) {
                             clustersField.setText("" + cachedSettings.get(configButtons.indexOf(settingsButton)).getLabels());
                         }
                     }
@@ -820,8 +825,7 @@ public final class AppUI extends UITemplate {
                     iterationsField.setFocusTraversable(false);
                     content.add(iterationsField, 1, 0);
                     if (!cachedSettings.isEmpty() 
-                            && cachedSettings.get(configButtons.indexOf(settingsButton)) != null 
-                            && settingsButton.equals(cachedSettings.get(configButtons.indexOf(settingsButton)).getBtn())) {
+                            && cachedSettings.get(configButtons.indexOf(settingsButton)) != null) {
                         iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(settingsButton)).getIterations());
                     }
                     intervalsField = new TextField();
@@ -833,7 +837,7 @@ public final class AppUI extends UITemplate {
                     runOption = new CheckBox();
                     content.add(runOption, 1, 3);
 
-                    if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(settingsButton)) != null && settingsButton.equals(cachedSettings.get(configButtons.indexOf(settingsButton)).getBtn())) {
+                    if (!cachedSettings.isEmpty() && cachedSettings.get(configButtons.indexOf(settingsButton)) != null ) {
                         iterationsField.setText("" + cachedSettings.get(configButtons.indexOf(settingsButton)).getIterations());
                         intervalsField.setText("" + cachedSettings.get(configButtons.indexOf(settingsButton)).getIntervals());
                         runOption.setSelected(cachedSettings.get(configButtons.indexOf(settingsButton)).isContinuousState());
@@ -897,12 +901,17 @@ public final class AppUI extends UITemplate {
                 for (RadioButton rb : getToggleGroups()) {
                     rb.selectedProperty().addListener(l -> {
                         currentAlgorithmTypeSelection = rb;
+                        try{
                         if (!cachedSettings.isEmpty()
                                 && cachedSettings.get(configButtons.indexOf(currentSettingsButton)).equals(cachedSettings.get(algorithmRadioButtons.indexOf(currentAlgorithmTypeSelection)))
                                 && !((AppData) applicationTemplate.getDataComponent()).getProcessor().getAlgorithmIsRunning()) {
                             runAlgorithm.setDisable(false);
                         } else {
                             runAlgorithm.setDisable(true);
+                        }
+                        }
+                        catch(ArrayIndexOutOfBoundsException e){
+                            
                         }
                     });
                 }
@@ -931,7 +940,7 @@ public final class AppUI extends UITemplate {
                     runAlgorithm.setDisable(true);
                 });
 
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | IndexOutOfBoundsException ex) {
             }
         }
     }
