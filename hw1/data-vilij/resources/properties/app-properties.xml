@@ -100,6 +100,10 @@ functionality within the main workspace. -->
         <property name="ALGO_SETTINGS_TITLE" value="Algorithm Run Configuration"/>
         <property name="ITERATIONS_TITLE" value="Max. Iterations: "/>
         <property name="INTERVALS_TITLE" value="Update Interval: "/>
+        
+        <property name="KMeansClusterer" value="K-Means Clustering"/>
+        <property name="RandomClassifier" value="Random Classification"/>
+        <property name="RandomClusterer" value="Random Clustering"/>
     </property_list>
     <property_options_list/>
 </properties>

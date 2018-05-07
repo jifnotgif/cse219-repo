@@ -6,22 +6,11 @@
 package tests;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.ScatterChart;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import ui.ConfigState;
-import vilij.templates.ApplicationTemplate;
 
 /**
  *

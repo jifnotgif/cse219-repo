@@ -112,6 +112,7 @@ public class RandomClusterer extends Clusterer {
                     Platform.runLater(() -> {
                         ((AppUI) applicationTemplate.getUIComponent()).setIterationLabelCount(counter.get());
                         ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setId("active");
+                        ((AppUI) applicationTemplate.getUIComponent()).getRunButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getScreenshotButton().setDisable(false);
                         ((AppUI) applicationTemplate.getUIComponent()).getReturnButton().setDisable(false);
                     });
@@ -124,7 +125,7 @@ public class RandomClusterer extends Clusterer {
                     break;
                 }
                 try {
-                    sleep(50);
+                    sleep(150);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
